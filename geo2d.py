@@ -12,6 +12,7 @@ Classes:
 @author: Nathanael Jöhrmann
 """
 
+import math
 
 class Point:
     """
@@ -28,6 +29,12 @@ class Point:
     def get_list(self):
         return [self.x, self.y]
 
+    def rotate_radians(self, angle):
+        x = self.x * math.cos(angle) - self.y*math.sin(angle)
+        y = self.x * math.sin(angle) + self.y*math.cos(angle)
+        self.x = x
+        self.y = y
+
 
 class Geometry2d:
     """
@@ -35,11 +42,12 @@ class Geometry2d:
     using the module pyansys for ANSYS. This class is meant to be subclassed
     for each specific geometry (like Square).
     """
-    def __init__(self, mapdl, origin_point=None):
+    def __init__(self, mapdl, rotation_angle, destination=None):
         self._mapdl = mapdl
-        if origin_point is None:
-            origin_point = Point(0, 0)
-        self._origin_point = origin_point
+        self._rotation_angle = rotation_angle
+        if destination is None:
+            destination = Point(0, 0)
+        self._destination = destination
 
         self._points = []  # position of keypoints
         self.keypoints = []  # ansys keypoint numbers
@@ -101,12 +109,19 @@ class Geometry2d:
             self._mapdl.asel("A", "AREA", area)
         self._mapdl.aatt(mat)
 
-    def _shift_points_by_origin_point(self):
+    def _rotate_points_by_rotation_angle(self):
         """
-        Moves the default positions to their destination via _origin_point.
+        Rotates geometry by _rotation_angle (in radians).
         """
         for point in self._points:
-            point.shift_by(self._origin_point)
+            point.rotate_radians(self._rotation_angle)
+
+    def _shift_points_to_destination(self):
+        """
+        Moves the default positions to their destination via _destination.
+        """
+        for point in self._points:
+            point.shift_by(self._destination)
 
     def select_lines(self):
         """
@@ -136,13 +151,26 @@ class Geometry2d:
         #  todo: consider uncertainty when comparing float values
         return (x == point.x) and (y == point.y)
 
+# =============================================================================
+#     def move_to(point):
+#         """
+#         Move geometry to giben Point. Call before calling create().
+#
+#         Parameters
+#         ----------
+#         point : Point
+#             Position where new origin point of geometry should be.
+#         """
+#         self._destination = point
+# =============================================================================
+
 
 class Rectangle(Geometry2d):
     """
     A rectangle geometry with 4 keypoints, 4 lines and one area.
     """
-    def __init__(self, mapdl, b, h, origin_point=None):
-        super().__init__(mapdl, origin_point)
+    def __init__(self, mapdl, b, h, rotation_angle=0, origin_point=None):
+        super().__init__(mapdl, rotation_angle,  origin_point)
         self._b = b
         self._h = h
         self._calc_points()
@@ -153,7 +181,8 @@ class Rectangle(Geometry2d):
         self._points.append(Point(0, self._h))
         self._points.append(Point(self._b, self._h))
         self._points.append(Point(self._b, 0))
-        super()._shift_points_by_origin_point()
+        super()._rotate_points_by_rotation_angle()
+        super()._shift_points_to_destination()
 
     def _create_lines(self):
         kp_count = len(self.keypoints)
@@ -191,8 +220,8 @@ class Rectangle(Geometry2d):
 
 
 class Film_with_roi(Geometry2d):
-    def __init__(self, mapdl, r, h, roi_width, roi_height, origin_point=None):
-        super().__init__(mapdl, origin_point)
+    def __init__(self, mapdl, r, h, roi_width, roi_height, rotation_angle=0, destination=None):
+        super().__init__(mapdl, rotation_angle, destination)
         self._r = r
         self._h = h
         self._roi_width = roi_width
@@ -215,7 +244,8 @@ class Film_with_roi(Geometry2d):
         self._points.append(Point(self._r, 0))
         #  for missing keypoint of roi:
         self._points.append(Point(0, self._h))
-        super()._shift_points_by_origin_point()
+        super()._rotate_points_by_rotation_angle()
+        super()._shift_points_to_destination()
 
     def _create_lines(self):
         self._create_film_lines()
