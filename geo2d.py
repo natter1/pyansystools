@@ -13,12 +13,14 @@ Classes:
 """
 
 import math
+import copy
+
 
 class Point:
     """
     Class representing a 2D point.
     """
-    def __init__(self, x, y):
+    def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
 
@@ -42,14 +44,16 @@ class Geometry2d:
     using the module pyansys for ANSYS. This class is meant to be subclassed
     for each specific geometry (like Square).
     """
-    def __init__(self, mapdl, rotation_angle, destination=None):
+    def __init__(self, mapdl, rotation_angle, destination=Point(0, 0)):
+        """
+        Should be called inside subclasses __init__.
+        """
         self._mapdl = mapdl
         self._rotation_angle = rotation_angle
-        if destination is None:
-            destination = Point(0, 0)
-        self._destination = destination
+        self._destination = copy.deepcopy(destination)
 
-        self._points = []  # position of keypoints
+        self._raw_points = []  # basic positions of geometry
+        self.points = []  # actual positions including rotation and shift
         self.keypoints = []  # ansys keypoint numbers
         self.lines = []  # ansys line numbers clockwise starting on left side
         self.areas = []  # ansys area numbers
@@ -68,7 +72,7 @@ class Geometry2d:
         -------
         None.
         """
-        for point in self._points:
+        for point in self.points:
             self.keypoints.append(self._mapdl.k("", *point.get_list()))
 
     def _create_keypoints_merged(self, geometry2d):
@@ -89,7 +93,7 @@ class Geometry2d:
         -------
         None.
         """
-        for point in self._points:
+        for point in self.points:
             found_keypoint = False
             for keypoint_number in geometry2d.keypoints:
                 if self._check_keypoint_is_at_point(keypoint_number, point):
@@ -109,18 +113,30 @@ class Geometry2d:
             self._mapdl.asel("A", "AREA", area)
         self._mapdl.aatt(mat)
 
+    def _calc_points(self):
+        self.points = copy.deepcopy(self._raw_points)
+        self._rotate_and_shift_points()
+
+    def _rotate_and_shift_points(self):
+        """
+        this function is supposed to be called from _calc_points().
+        It rotates points by rotation_angle and shifts them to destination.
+        """
+        self._rotate_points_by_rotation_angle()
+        self._shift_points_to_destination()
+
     def _rotate_points_by_rotation_angle(self):
         """
         Rotates geometry by _rotation_angle (in radians).
         """
-        for point in self._points:
+        for point in self.points:
             point.rotate_radians(self._rotation_angle)
 
     def _shift_points_to_destination(self):
         """
         Moves the default positions to their destination via _destination.
         """
-        for point in self._points:
+        for point in self.points:
             point.shift_by(self._destination)
 
     def select_lines(self):
@@ -131,7 +147,7 @@ class Geometry2d:
         for line_number in self.lines:
             self._mapdl.lsel("A", "LINE", "", line_number)
 
-    def _check_keypoint_is_at_point(self, keypoint_number, point):
+    def _check_keypoint_is_at_point(self, keypoint_number, point, tol=1e-6):
         """
         Checks if keypoint is at the position point.
 
@@ -142,47 +158,79 @@ class Geometry2d:
 
         point : Point
             Position where keypoint is expected.
+
+        tol : float (optional)
+            Absolute tolerance when comparing float values for x and y.
+            Defaults to 1e-6
         Returns
         -------
         Boolean.
         """
         x = self._mapdl.get_float("KP", keypoint_number, "LOC", "X")
         y = self._mapdl.get_float("KP", keypoint_number, "LOC", "Y")
-        #  todo: consider uncertainty when comparing float values
-        return (x == point.x) and (y == point.y)
+        return (math.isclose(x, point.x, abs_tol=tol)
+                and math.isclose(y, point.y, abs_tol=tol))
 
-# =============================================================================
-#     def move_to(point):
-#         """
-#         Move geometry to giben Point. Call before calling create().
-#
-#         Parameters
-#         ----------
-#         point : Point
-#             Position where new origin point of geometry should be.
-#         """
-#         self._destination = point
-# =============================================================================
+    def set_destination(self, point):
+        """
+        Sets destination of geometry and recalc points.
+        Use before calling create() or create_merged_to().
+        Does not change already created data inside ANSYS.
+
+        Parameters
+        ----------
+        point : Point
+            Destination coordinates for geometry.
+        """
+        self._destination.x = point.x
+        self._destination.y = point.y
+        self._calc_points()
+
+    def set_rotation(self, radians):
+        """
+        Sets rotation_angle of geometry and recalc points.
+        Use before calling create() or create_merged_to().
+        Does not change already created data inside ANSYS.
+
+        Parameters
+        ----------
+        radians : float
+            Rotation of geometry in radians.
+        """
+        self._rotation_angle = radians
+        self._calc_points()
+
+    def set_rotation_in_degree(self, rotation):
+        """
+        Sets rotation_angle of geometry and recalc points.
+        Use before calling create() or create_merged_to().
+        Does not change already created data inside ANSYS.
+
+        Parameters
+        ----------
+        rotation : float
+            Rotation of geometry in degrees.
+        """
+        self.set_rotation(rotation / 180 * math.pi)
 
 
 class Rectangle(Geometry2d):
     """
     A rectangle geometry with 4 keypoints, 4 lines and one area.
     """
-    def __init__(self, mapdl, b, h, rotation_angle=0, origin_point=None):
-        super().__init__(mapdl, rotation_angle,  origin_point)
+    def __init__(self, mapdl, b, h, rotation_angle=0, destination=Point(0, 0)):
+        super().__init__(mapdl, rotation_angle,  destination)
         self._b = b
         self._h = h
-        self._calc_points()
+        self._calc_raw_points()
+        super()._calc_points()
 
-    def _calc_points(self):
-        self._points.clear()
-        self._points.append(Point(0, 0))
-        self._points.append(Point(0, self._h))
-        self._points.append(Point(self._b, self._h))
-        self._points.append(Point(self._b, 0))
-        super()._rotate_points_by_rotation_angle()
-        super()._shift_points_to_destination()
+    def _calc_raw_points(self):
+        self._raw_points.clear()
+        self._raw_points.append(Point(0, 0))
+        self._raw_points.append(Point(0, self._h))
+        self._raw_points.append(Point(self._b, self._h))
+        self._raw_points.append(Point(self._b, 0))
 
     def _create_lines(self):
         kp_count = len(self.keypoints)
@@ -220,32 +268,38 @@ class Rectangle(Geometry2d):
 
 
 class Film_with_roi(Geometry2d):
-    def __init__(self, mapdl, r, h, roi_width, roi_height, rotation_angle=0, destination=None):
+    def __init__(self, mapdl, r, h, roi_width, roi_height,
+                 rotation_angle=0, destination=Point(0, 0)):
         super().__init__(mapdl, rotation_angle, destination)
         self._r = r
         self._h = h
         self._roi_width = roi_width
         self._roi_height = roi_height
-        self._calc_points()
+        self._calc_raw_points()
         self.film_lines = []
         self.roi_lines = []
         self.film_area = None
         self.roi_area = None
+        super()._calc_points()
 
-    def _calc_points(self):
-        self._points.clear()
-        self._points.append(Point(0, 0))
+    def _calc_raw_points(self):
+        self._raw_points.clear()
+        self._raw_points.append(Point(0, 0))
+
         #  for line between film and roi:
-        self._points.append(Point(0, self._h-self._roi_height))
-        self._points.append(Point(2/3*self._roi_width, self._h-5/6*self._roi_height))
-        self._points.append(Point(self._roi_width, self._h))
+        self._raw_points.append(Point(0, self._h-self._roi_height))
+        support_point = Point()  # used to create spline
+        support_point.x = 2/3*self._roi_width
+        support_point.y = self._h-5/6*self._roi_height
+        self._raw_points.append(support_point)
+        self._raw_points.append(Point(self._roi_width, self._h))
         #  ------------------------------
-        self._points.append(Point(self._r, self._h))
-        self._points.append(Point(self._r, 0))
+
+        self._raw_points.append(Point(self._r, self._h))
+        self._raw_points.append(Point(self._r, 0))
+
         #  for missing keypoint of roi:
-        self._points.append(Point(0, self._h))
-        super()._rotate_points_by_rotation_angle()
-        super()._shift_points_to_destination()
+        self._raw_points.append(Point(0, self._h))
 
     def _create_lines(self):
         self._create_film_lines()
@@ -258,7 +312,9 @@ class Film_with_roi(Geometry2d):
 
         self.film_lines.append(self._mapdl.l(k[0], k[1]))
 
-        spline_line = self._mapdl.bsplin(k[1], k[2], k[3], "", "", "", -1, 0, 0, 0, 1, 0)
+        spline_line = self._mapdl.bsplin(k[1], k[2], k[3], "", "", "",
+                                         -1, 0, 0,
+                                         0, 1, 0)
         self.film_lines.append(spline_line)
 
         self.film_lines.append(self._mapdl.l(k[3], k[4]))
