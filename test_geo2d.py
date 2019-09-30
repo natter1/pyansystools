@@ -34,8 +34,10 @@ def main():  # called at end of file if __name__ == "__main__"
     plot(mapdl)
     test_rectangle_on_rectangle_without_merge(mapdl)
     plot(mapdl)
+    test_tip(mapdl)
+    plot(mapdl)
 
-    # mapdl.open_gui()
+    mapdl.open_gui()
     mapdl.exit()
 
 
@@ -88,6 +90,10 @@ def test_rectangle_on_rectangle_without_merge(mapdl):
     film.create()
 
 
+def test_tip(mapdl):
+    mapdl.clear()
+    tip = geo2d.Tip(mapdl)
+    tip.create()
 # =============================================================================
 # from pyansys import examples
 # for i in range(1, int(10e5)):

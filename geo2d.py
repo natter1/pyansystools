@@ -358,3 +358,41 @@ class Film_with_roi(Geometry2d):
         self._create_lines()
         self.film_area = self._mapdl.al(*self.film_lines)
         self.roi_area = self._mapdl.al(*self.roi_lines)
+
+
+class Tip(Geometry2d):
+    """
+    Half of a sharp tip as used for nanoindentation (axisymmetric model).
+    The shape is defined via coeff. of an area-function (polynom-fit).
+    """
+    def __init__(self, mapdl, rotation_angle=0, destination=Point(0, 0)):
+        super().__init__(mapdl, rotation_angle,  destination)
+        # todo: add parameter for area fit function
+        self._calc_raw_points()
+        super()._calc_points()
+
+    def _calc_raw_points(self):
+        self._raw_points.clear()
+
+        self._raw_points.append(Point(0, 0))
+        self._raw_points.append(Point(0, 1000))
+        for y in reversed(range(1, 1001)):  # reversed -> keypoints clockwise
+            self._raw_points.append(Point(self._calc_tip_radius(y), y))
+
+    def _create_lines(self):
+        k = self.keypoints
+        self.lines.append(self._mapdl.l(k[0], k[1]))
+        self.lines.append(self._mapdl.l(k[1], k[2]))
+
+        # todo: spline for tip shape
+        self.lines.append(self._mapdl.l(k[2], k[0]))  # place holder
+
+    def create(self):
+        self._mapdl.prep7()
+        super()._create_keypoints()
+        self._create_lines()
+        self.areas.append(self._mapdl.al(*self.lines))
+
+    # todo:
+    def _calc_tip_radius(self, y):
+        return y  # place holder
