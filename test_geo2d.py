@@ -92,7 +92,8 @@ def test_rectangle_on_rectangle_without_merge(mapdl):
 
 def test_tip(mapdl):
     mapdl.clear()
-    tip = geo2d.Tip(mapdl)
+    area_coefficients = [24.5, 0, 0, 0, 0, 0]
+    tip = geo2d.Tip(mapdl, area_coefficients)
     tip.create()
 # =============================================================================
 # from pyansys import examples
