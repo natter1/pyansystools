@@ -150,6 +150,14 @@ class Geometry2d:
         for point in self.points:
             point.shift_by(self._destination)
 
+    def _mesh(self):
+        """
+        Should be called inside subclasses->mesh(). Meshes all areas.
+        """
+        self.select_areas()
+        # AMESH Generates nodes and area elements within areas
+        self._mapdl.amesh("ALL")
+
     def select_lines(self):
         """
         Selects all lines belonging to the geometry.
@@ -160,7 +168,7 @@ class Geometry2d:
 
     def select_areas(self):
         """
-        Selects all lines belonging to the geometry.
+        Selects all areas belonging to the geometry.
         """
         self._mapdl.asel("none")
         for area_number in self.areas:
@@ -233,23 +241,22 @@ class Geometry2d:
         self.set_rotation(rotation / 180 * math.pi)
 
 
-class Rectangle(Geometry2d):
+class Polygon(Geometry2d):
     """
-    A rectangle geometry with 4 keypoints, 4 lines and one area.
+    A polygonal geometry constructed with a list of points.
+    The points should be given in a clockwise manner starting
+    at bottom left. Also, the first point should be at (0,0) if
+    it shall be used as origin point (for rotation and destination).
+    There can be exceptions to this, for example when creating a circle.
     """
-    def __init__(self, mapdl, b, h, rotation_angle=0, destination=Point(0, 0)):
+    def __init__(self, mapdl, raw_points,
+                 rotation_angle=0, destination=Point(0, 0)):
         super().__init__(mapdl, rotation_angle,  destination)
-        self._b = b
-        self._h = h
-        self._calc_raw_points()
+        self._raw_points = raw_points
+        # calc_raw_points not needed here. But in future maybe use it,
+        # to check, if points result in valid geometry (e.g. one area ...)
+        # self._calc_raw_points()
         super()._calc_points()
-
-    def _calc_raw_points(self):
-        self._raw_points.clear()
-        self._raw_points.append(Point(0, 0))
-        self._raw_points.append(Point(0, self._h))
-        self._raw_points.append(Point(self._b, self._h))
-        self._raw_points.append(Point(self._b, 0))
 
     def _create_lines(self):
         kp_count = len(self.keypoints)
@@ -258,11 +265,22 @@ class Rectangle(Geometry2d):
             kp2 = self.keypoints[(i+1) % kp_count]
             self.lines.append(self._mapdl.l(kp1, kp2))
 
+    def _create_area(self):
+        super().select_lines()
+        self.areas.append(self._mapdl.al("ALL"))
+
     def create(self):
         self._mapdl.prep7()
-        super()._create_keypoints()
+        self._create_keypoints()
         self._create_lines()
-        self.areas.append(self._mapdl.al(*self.lines))
+        self._create_area()
+
+    def mesh(self, nir):
+        self._mapdl.prep7()
+        super().select_lines()
+        for line in self.lines:
+            self._mapdl.lesize(line, "", "", nir)
+            super()._mesh()
 
     def create_merged_to(self, geometry2d):
         """
@@ -281,17 +299,67 @@ class Rectangle(Geometry2d):
 
         """
         super()._create_keypoints_merged(geometry2d)
-
         self._create_lines()
-        self.areas.append(self._mapdl.al(*self.lines))
+        self._create_area()
+
+
+class Rectangle(Polygon):
+    """
+    A rectangle geometry with 4 keypoints, 4 lines and one area.
+    """
+    def __init__(self, mapdl, b, h, rotation_angle=0, destination=Point(0, 0)):
+        # super().__init__(mapdl, rotation_angle,  destination)
+        self._b = b
+        self._h = h
+        self._calc_raw_points()
+        super().__init__(mapdl, self._raw_points, rotation_angle,  destination)
+
+    def _calc_raw_points(self):
+        self._raw_points = []
+        self._raw_points.append(Point(0, 0))
+        self._raw_points.append(Point(0, self._h))
+        self._raw_points.append(Point(self._b, self._h))
+        self._raw_points.append(Point(self._b, 0))
+
+    def mesh(self, ndiv_width, ndiv_height, ratio_width=1, ratio_heigh=1):
+        self._mapdl.prep7()
+        super().select_lines()
+        self._mapdl.lesize(self.lines[0], "", "", ndiv_height, ratio_heigh)
+        self._mapdl.lesize(self.lines[2], "", "", ndiv_height, 1/ratio_heigh)
+        self._mapdl.lesize(self.lines[1], "", "", ndiv_width, ratio_width)
+        self._mapdl.lesize(self.lines[3], "", "", ndiv_width, 1/ratio_width)
+        super()._mesh()
+
+
+class Circle(Polygon):
+    """
+    A circle geometry approximation with parts lines.
+    """
+    # todo: better name for parts
+    def __init__(self, mapdl, radius, parts,
+                 rotation_angle=0, destination=Point(0, 0)):
+        self._r = radius
+        self._parts = parts
+        self._calc_raw_points()
+        super().__init__(mapdl, self._raw_points, rotation_angle,  destination)
+
+    def _calc_raw_points(self):
+        self._raw_points = []
+        # x = -self._r
+        # y = 0
+        for i in range(self._parts):
+            # start left -> x = -r*cos(a)
+            x = -self._r * math.cos(i*(2 * math.pi / self._parts))
+            y = self._r * math.sin(i*(2 * math.pi / self._parts))
+            self._raw_points.append(Point(x, y))
 
 
 class Film_with_roi(Geometry2d):
-    def __init__(self, mapdl, r, h, roi_width, roi_height,
+    def __init__(self, mapdl, radius, height, roi_width, roi_height,
                  rotation_angle=0, destination=Point(0, 0)):
         super().__init__(mapdl, rotation_angle, destination)
-        self._r = r
-        self._h = h
+        self._r = radius
+        self._h = height
         self._roi_width = roi_width
         self._roi_height = roi_height
         self._calc_raw_points()
@@ -380,6 +448,23 @@ class Film_with_roi(Geometry2d):
         self.areas.append(self.film_area)
         self.areas.append(self.roi_area)
 
+    # todo: use parameter!
+    def mesh(self, nir):
+        self._mapdl.prep7()
+        super().select_lines()
+        # ROI - indent region
+        self._mapdl.lesize(self.roi_lines[0], "", "", 2*nir, 0, "", "", "", 1)
+        self._mapdl.lesize(self.roi_lines[1], "", "", 6*nir, -0.25, "", "", "", 1)
+        self._mapdl.lesize(self.roi_lines[2], "", "", 2*nir, -5, "", "", "", 1)
+
+        # outer region
+        self._mapdl.lesize(self.film_lines[0], "", "", 5*2+4, 0.1, "", "", "", 1)
+        self._mapdl.lesize(self.film_lines[2], "", "", 15+4, 25, "", "", "", 1)
+        self._mapdl.lesize(self.film_lines[3], "", "", 3, "", "", "", "", 1)
+        self._mapdl.lesize(self.film_lines[4], "", "", 16+4, 10, "", "", "", 1)
+        super()._mesh()
+
+
 class Tip(Geometry2d):
     """
     Half of a sharp tip as used for nanoindentation (axisymmetric model).
@@ -406,6 +491,9 @@ class Tip(Geometry2d):
         super().__init__(mapdl, rotation_angle,  destination)
         # todo: add parameter for area fit function
         self._shape_coefficients = shape_coefficients
+        self._n_splines = 20
+        # make sure, _n_splines is of form 5*n+1 !
+        self._n_splines = (self._n_splines // 5) * 5 + 1
         self._calc_raw_points()
         super()._calc_points()
 
@@ -415,7 +503,9 @@ class Tip(Geometry2d):
         self._raw_points.append(Point(0, 0))
         self._raw_points.append(Point(0, 1500))
         self._raw_points.append(Point(self._calc_tip_radius(1000), 1500))
-        for y in reversed(range(1, 1001)):  # reversed -> keypoints clockwise
+
+        for i in reversed(range(1, self._n_splines+1)):
+            y = 1000*pow(i/(self._n_splines), 2)
             self._raw_points.append(Point(self._calc_tip_radius(y), y))
 
     def _create_lines(self):
@@ -424,19 +514,24 @@ class Tip(Geometry2d):
         self.lines.append(self._mapdl.l(k[1], k[2]))
         self.lines.append(self._mapdl.l(k[2], k[3]))
 
-        for i in range(3, 903, 100):
-            keypoints = [k[i], k[i+20], k[i+40], k[i+60], k[i+80], k[(i+100)]]
+        for i in range(3, len(k)-1, 5):
+            keypoints = [k[i], k[i+1], k[i+2], k[i+3], k[i+4], k[i+5]]
             self.lines.append(self._mapdl.bsplin(*keypoints))
-#        self.lines.append(self._mapdl.l(k[902], k[0]))  # place holder
-
-        keypoints = [k[903], k[913], k[923], k[933], k[943], k[953]]
-        self.lines.append(self._mapdl.bsplin(*keypoints))
-        keypoints = [k[953], k[963], k[973], k[983], k[993], k[0]]
-        self.lines.append(self._mapdl.bsplin(*keypoints))
+        keypoints = [k[i+5], k[0], "", "", "", ""]
+        self.lines.append(self._mapdl.bsplin(*keypoints, "", "", "", -1))
 
     def select_spline_lines(self):
-        self._mapdl.lsel("S", "LINE", "", self.lines[3],
-                 self.lines[len(self.lines)-1])
+        """
+        Selects all lines belonging to the spline shape.
+        """
+        self._mapdl.lsel("none")
+        for line_number in self.lines[3:len(self.lines)]:
+            self._mapdl.lsel("A", "LINE", "", line_number)
+# =============================================================================
+#         self._mapdl.lsel("S", "LINE", "", self.lines[3],
+#                  self.lines[len(self.lines)-1])
+# =============================================================================
+
     def create(self):
         self._mapdl.prep7()
         super()._create_keypoints()
@@ -449,6 +544,14 @@ class Tip(Geometry2d):
         # concatenate splines in preparation for mapped meshing
         # (needed to be done after creating area ?)
         self._mapdl.lccat("ALL")
+
+    def mesh(self):
+        self._mapdl.prep7()
+        super().select_lines()
+        self._mapdl.lesize(self.lines[0], "", "", 7, 4)  # , 11 ,7
+        self._mapdl.lesize(self.lines[1], "", "", 25, "")  # 85 (,)
+        self._mapdl.lesize(self.lines[2], "", "", 3)
+        super()._mesh()
 
     # todo: better function name!
     def _calc_tip_radius(self, i):
@@ -477,9 +580,3 @@ class Tip(Geometry2d):
         # use simple fit with y=mx**2
         m = use_area_function(min_fitted_i)/(min_fitted_i**0.5)  # m = y/x**0.5
         return m * i**0.5
-
-# =============================================================================
-#     # todo:
-#     def _calc_tip_radius(self, y):
-#         return y  # place holder
-# =============================================================================

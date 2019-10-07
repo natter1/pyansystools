@@ -26,16 +26,20 @@ def main():  # called at end of file if __name__ == "__main__"
     mapdl = pyansys.Mapdl(override=True, interactive_plotting=True,
                           run_location=path)
 
-    test_film_with_roi(mapdl)
+    test_circle(mapdl)
     plot(mapdl)
-    test_film_with_roi_merged_to_rectangle(mapdl)
-    plot(mapdl)
-    test_rectangle_merged_with_rectangle(mapdl)
-    plot(mapdl)
-    test_rectangle_on_rectangle_without_merge(mapdl)
-    plot(mapdl)
-    test_tip(mapdl)
-    plot(mapdl)
+# =============================================================================
+#     test_film_with_roi(mapdl)
+#     plot(mapdl)
+#     test_film_with_roi_merged_to_rectangle(mapdl)
+#     plot(mapdl)
+#     test_rectangle_merged_with_rectangle(mapdl)
+#     plot(mapdl)
+#     test_rectangle_on_rectangle_without_merge(mapdl)
+#     plot(mapdl)
+#     test_tip(mapdl)
+#     plot(mapdl)
+# =============================================================================
 
     mapdl.open_gui()
     mapdl.exit()
@@ -46,7 +50,16 @@ def plot(mapdl):
     mapdl.pnum("KP", 1)
     mapdl.pnum("LINE", 1)
     mapdl.pnum("AREA", 1)
-    mapdl.aplot()
+    mapdl.gplot()
+
+
+def test_circle(mapdl):
+    mapdl.clear()
+    circle = geo2d.Circle(mapdl, 1, 80)
+    circle.create()
+    mapdl.et("", "PLANE183")
+    mapdl.mshkey(2)
+    circle.mesh(2)
 
 
 def test_film_with_roi(mapdl):
