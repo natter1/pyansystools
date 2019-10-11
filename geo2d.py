@@ -12,14 +12,15 @@ Classes:
 @author: Nathanael Jöhrmann
 """
 
-import math
 import copy
+import math
 
 
 class Point:
     """
     Class representing a 2D point.
     """
+
     def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
@@ -32,8 +33,8 @@ class Point:
         return [self.x, self.y]
 
     def rotate_radians(self, angle):
-        x = self.x * math.cos(angle) - self.y*math.sin(angle)
-        y = self.x * math.sin(angle) + self.y*math.cos(angle)
+        x = self.x * math.cos(angle) - self.y * math.sin(angle)
+        y = self.x * math.sin(angle) + self.y * math.cos(angle)
         self.x = x
         self.y = y
 
@@ -44,6 +45,7 @@ class Geometry2d:
     using the module pyansys for ANSYS. This class is meant to be subclassed
     for each specific geometry (like Square).
     """
+
     def __init__(self, mapdl, rotation_angle=0, destination=Point(0, 0)):
         """
         Should be called inside subclasses __init__.
@@ -119,7 +121,7 @@ class Geometry2d:
     def set_material_number(self, mat):
         assert self.areas is not [], "Can't set material number without area"
         self._mapdl.prep7()
-        self.asel("NONE")
+        self._mapdl.asel("NONE")
         for area in self.areas:
             self._mapdl.asel("A", "AREA", area)
         self._mapdl.aatt(mat)
@@ -249,9 +251,10 @@ class Polygon(Geometry2d):
     it shall be used as origin point (for rotation and destination).
     There can be exceptions to this, for example when creating a circle.
     """
+
     def __init__(self, mapdl, raw_points,
                  rotation_angle=0, destination=Point(0, 0)):
-        super().__init__(mapdl, rotation_angle,  destination)
+        super().__init__(mapdl, rotation_angle, destination)
         self._raw_points = raw_points
         # calc_raw_points not needed here. But in future maybe use it,
         # to check, if points result in valid geometry (e.g. one area ...)
@@ -262,7 +265,7 @@ class Polygon(Geometry2d):
         kp_count = len(self.keypoints)
         for i in range(0, kp_count):
             kp1 = self.keypoints[i]
-            kp2 = self.keypoints[(i+1) % kp_count]
+            kp2 = self.keypoints[(i + 1) % kp_count]
             self.lines.append(self._mapdl.l(kp1, kp2))
 
     def _create_area(self):
@@ -276,6 +279,11 @@ class Polygon(Geometry2d):
         self._create_area()
 
     def mesh(self, nir):
+        """
+        Default meshing for polygons.
+        The parameter nir sets number of divisions for each line.
+        For more customized meshing, use mesh_custom in a subclass.
+        """
         self._mapdl.prep7()
         super().select_lines()
         for line in self.lines:
@@ -307,12 +315,13 @@ class Rectangle(Polygon):
     """
     A rectangle geometry with 4 keypoints, 4 lines and one area.
     """
+
     def __init__(self, mapdl, b, h, rotation_angle=0, destination=Point(0, 0)):
         # super().__init__(mapdl, rotation_angle,  destination)
         self._b = b
         self._h = h
         self._calc_raw_points()
-        super().__init__(mapdl, self._raw_points, rotation_angle,  destination)
+        super().__init__(mapdl, self._raw_points, rotation_angle, destination)
 
     def _calc_raw_points(self):
         self._raw_points = []
@@ -321,13 +330,13 @@ class Rectangle(Polygon):
         self._raw_points.append(Point(self._b, self._h))
         self._raw_points.append(Point(self._b, 0))
 
-    def mesh(self, ndiv_width, ndiv_height, ratio_width=1, ratio_heigh=1):
+    def mesh_custom(self, ndiv_width, ndiv_height, ratio_width=1, ratio_heigh=1):
         self._mapdl.prep7()
         super().select_lines()
         self._mapdl.lesize(self.lines[0], "", "", ndiv_height, ratio_heigh)
-        self._mapdl.lesize(self.lines[2], "", "", ndiv_height, 1/ratio_heigh)
+        self._mapdl.lesize(self.lines[2], "", "", ndiv_height, 1 / ratio_heigh)
         self._mapdl.lesize(self.lines[1], "", "", ndiv_width, ratio_width)
-        self._mapdl.lesize(self.lines[3], "", "", ndiv_width, 1/ratio_width)
+        self._mapdl.lesize(self.lines[3], "", "", ndiv_width, 1 / ratio_width)
         super()._mesh()
 
 
@@ -335,13 +344,14 @@ class Circle(Polygon):
     """
     A circle geometry approximation with parts lines.
     """
+
     # todo: better name for parts
     def __init__(self, mapdl, radius, parts,
                  rotation_angle=0, destination=Point(0, 0)):
         self._r = radius
         self._parts = parts
         self._calc_raw_points()
-        super().__init__(mapdl, self._raw_points, rotation_angle,  destination)
+        super().__init__(mapdl, self._raw_points, rotation_angle, destination)
 
     def _calc_raw_points(self):
         self._raw_points = []
@@ -349,12 +359,12 @@ class Circle(Polygon):
         # y = 0
         for i in range(self._parts):
             # start left -> x = -r*cos(a)
-            x = -self._r * math.cos(i*(2 * math.pi / self._parts))
-            y = self._r * math.sin(i*(2 * math.pi / self._parts))
+            x = -self._r * math.cos(i * (2 * math.pi / self._parts))
+            y = self._r * math.sin(i * (2 * math.pi / self._parts))
             self._raw_points.append(Point(x, y))
 
 
-class Film_with_roi(Geometry2d):
+class FilmWithROI(Geometry2d):
     def __init__(self, mapdl, radius, height, roi_width, roi_height,
                  rotation_angle=0, destination=Point(0, 0)):
         super().__init__(mapdl, rotation_angle, destination)
@@ -374,10 +384,10 @@ class Film_with_roi(Geometry2d):
         self._raw_points.append(Point(0, 0))
 
         #  for line between film and roi:
-        self._raw_points.append(Point(0, self._h-self._roi_height))
+        self._raw_points.append(Point(0, self._h - self._roi_height))
         support_point = Point()  # used to create spline
-        support_point.x = 2/3*self._roi_width
-        support_point.y = self._h-5/6*self._roi_height
+        support_point.x = 2 / 3 * self._roi_width
+        support_point.y = self._h - 5 / 6 * self._roi_height
         self._raw_points.append(support_point)
         self._raw_points.append(Point(self._roi_width, self._h))
         #  ------------------------------
@@ -453,15 +463,15 @@ class Film_with_roi(Geometry2d):
         self._mapdl.prep7()
         super().select_lines()
         # ROI - indent region
-        self._mapdl.lesize(self.roi_lines[0], "", "", 2*nir, 0, "", "", "", 1)
-        self._mapdl.lesize(self.roi_lines[1], "", "", 6*nir, -0.25, "", "", "", 1)
-        self._mapdl.lesize(self.roi_lines[2], "", "", 2*nir, -5, "", "", "", 1)
+        self._mapdl.lesize(self.roi_lines[0], "", "", 2 * nir, 0, "", "", "", 1)
+        self._mapdl.lesize(self.roi_lines[1], "", "", 6 * nir, -0.25, "", "", "", 1)
+        self._mapdl.lesize(self.roi_lines[2], "", "", 2 * nir, -5, "", "", "", 1)
 
         # outer region
-        self._mapdl.lesize(self.film_lines[0], "", "", 5*2+4, 0.1, "", "", "", 1)
-        self._mapdl.lesize(self.film_lines[2], "", "", 15+4, 25, "", "", "", 1)
+        self._mapdl.lesize(self.film_lines[0], "", "", 5 * 2 + 4, 0.1, "", "", "", 1)
+        self._mapdl.lesize(self.film_lines[2], "", "", 15 + 4, 25, "", "", "", 1)
         self._mapdl.lesize(self.film_lines[3], "", "", 3, "", "", "", "", 1)
-        self._mapdl.lesize(self.film_lines[4], "", "", 16+4, 10, "", "", "", 1)
+        self._mapdl.lesize(self.film_lines[4], "", "", 16 + 4, 10, "", "", "", 1)
         super()._mesh()
 
 
@@ -470,6 +480,7 @@ class Tip(Geometry2d):
     Half of a sharp tip as used for nanoindentation (axisymmetric model).
     The shape is defined via coeff. of an area-function (polynom-fit).
     """
+
     def __init__(self, mapdl, shape_coefficients,
                  rotation_angle=0, destination=Point(0, 0)):
         """
@@ -488,7 +499,7 @@ class Tip(Geometry2d):
             destination : Point
                 Position inside ANSYS, where geometry should be created.
         """
-        super().__init__(mapdl, rotation_angle,  destination)
+        super().__init__(mapdl, rotation_angle, destination)
         # todo: add parameter for area fit function
         self._shape_coefficients = shape_coefficients
         self._n_splines = 20
@@ -504,8 +515,8 @@ class Tip(Geometry2d):
         self._raw_points.append(Point(0, 1500))
         self._raw_points.append(Point(self._calc_tip_radius(1000), 1500))
 
-        for i in reversed(range(1, self._n_splines+1)):
-            y = 1000*pow(i/(self._n_splines), 2)
+        for i in reversed(range(1, self._n_splines + 1)):
+            y = 1000 * pow(i / self._n_splines, 2)
             self._raw_points.append(Point(self._calc_tip_radius(y), y))
 
     def _create_lines(self):
@@ -514,10 +525,10 @@ class Tip(Geometry2d):
         self.lines.append(self._mapdl.l(k[1], k[2]))
         self.lines.append(self._mapdl.l(k[2], k[3]))
 
-        for i in range(3, len(k)-1, 5):
-            keypoints = [k[i], k[i+1], k[i+2], k[i+3], k[i+4], k[i+5]]
+        for i in range(3, len(k) - 1, 5):
+            keypoints = [k[i], k[i + 1], k[i + 2], k[i + 3], k[i + 4], k[i + 5]]
             self.lines.append(self._mapdl.bsplin(*keypoints))
-        keypoints = [k[i+5], k[0], "", "", "", ""]
+        keypoints = [k[i + 5], k[0], "", "", "", ""]
         self.lines.append(self._mapdl.bsplin(*keypoints, "", "", "", -1))
 
     def select_spline_lines(self):
@@ -527,10 +538,11 @@ class Tip(Geometry2d):
         self._mapdl.lsel("none")
         for line_number in self.lines[3:len(self.lines)]:
             self._mapdl.lsel("A", "LINE", "", line_number)
-# =============================================================================
-#         self._mapdl.lsel("S", "LINE", "", self.lines[3],
-#                  self.lines[len(self.lines)-1])
-# =============================================================================
+
+    # =============================================================================
+    #         self._mapdl.lsel("S", "LINE", "", self.lines[3],
+    #                  self.lines[len(self.lines)-1])
+    # =============================================================================
 
     def create(self):
         self._mapdl.prep7()
@@ -562,10 +574,11 @@ class Tip(Geometry2d):
         parameter:
             i: indentation depth
         """
+
         def use_area_function(i):
-            AC = self._shape_coefficients
-            return ((AC[0]*i**2 + AC[1]*i + AC[2]*i**0.5 + AC[3]*i**0.25
-                     + AC[4]*i**0.125 + AC[5]*i**0.0625)/math.pi)**0.5
+            ac = self._shape_coefficients
+            return ((ac[0] * i ** 2 + ac[1] * i + ac[2] * i ** 0.5 + ac[3] * i ** 0.25
+                     + ac[4] * i ** 0.125 + ac[5] * i ** 0.0625) / math.pi) ** 0.5
 
         assert i >= 0, "Indentation depth must be >=0 for calc_tip_radius"
 
@@ -578,5 +591,5 @@ class Tip(Geometry2d):
         if i >= min_fitted_i:  # use experimental area fit function
             return use_area_function(i)
         # use simple fit with y=mx**2
-        m = use_area_function(min_fitted_i)/(min_fitted_i**0.5)  # m = y/x**0.5
-        return m * i**0.5
+        m = use_area_function(min_fitted_i) / (min_fitted_i ** 0.5)  # m = y/x**0.5
+        return m * i ** 0.5

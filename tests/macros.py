@@ -99,7 +99,7 @@ class Macros:
         Make sure to create nodes for those lines before calling this.
         """
         # Create Contact Pair:
-        n_target169, n_conta172 = self.create_contact_pair_for_lines_asymmetric(lines_a, lines_b)
+        n_target169, n_conta172 = self.create_contact_pair_for_lines_asymmetric(lines_a, lines_b, n_target169, n_conta172)
         # Create Companion Pair:
         self.create_contact_pair_for_lines_asymmetric(lines_b, lines_a, n_target169, n_conta172)
         # self.Edcontact(0.2)
