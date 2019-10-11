@@ -1,138 +1,161 @@
-from unittest import TestCase
+import pytest
+from inline import Inline as Inline
+from inline import Status as Status
 
+@pytest.fixture(scope='session')
+def inline(setup_ansys):
+    yield Inline(setup_ansys)
 
-class TestInline(TestCase):
-    def test__read_inline(self):
-        self.fail()
+@pytest.fixture(scope='class')
+def setup_data(setup_ansys):
+    setup_ansys.prep7()
+    # todo: change to dictionary
+    k1 = setup_ansys.k("", 0, 0, 0)
+    k2 = setup_ansys.k("", 1, 0, 0)
+    k3 = setup_ansys.k("", 0, 1, 0)
+    n1 = setup_ansys.n("", 0, 0, 0)
+    n2 = setup_ansys.n("", 1, 0, 0)
+    n3 = setup_ansys.n("", 0, 1, 0)
+    yield
+    setup_ansys.clear()
 
-    def test_nsel(self):
-        self.fail()
+class TestInline:
+    def test__read_inline(self, inline, setup_data):
+        result = inline._read_inline("3")
+        assert result == 3
 
-    def test_esel(self):
-        self.fail()
+    def test_nsel(self, inline, setup_data):
+        assert inline.nsel(0) == Status.UNDEFINED
+        assert inline.nsel(1) == Status.SELECTED
+        assert inline.nsel(2) == Status.UNSELECTED
 
-    def test_ksel(self):
-        self.fail()
+    def test_esel(self, inline, setup_data):
+        assert False
 
-    def test_lsel(self):
-        self.fail()
+    def test_ksel(self, inline, setup_data):
+        assert inline.ksel(0) == Status.UNDEFINED
+        assert inline.ksel(1) == Status.SELECTED
+        assert inline.ksel(2) == Status.UNSELECTED
 
-    def test_asel(self):
-        self.fail()
+    def test_lsel(self, inline, setup_data):
+        assert False
 
-    def test_vsel(self):
-        self.fail()
+    def test_asel(self, inline, setup_data):
+        assert False
 
-    def test_ndnext(self):
-        self.fail()
+    def test_vsel(self, inline, setup_data):
+        assert False
 
-    def test_elnext(self):
-        self.fail()
+    def test_ndnext(self, inline, setup_data):
+        assert False
 
-    def test_kpnext(self):
-        self.fail()
+    def test_elnext(self, inline, setup_data):
+        assert False
 
-    def test_lsnext(self):
-        self.fail()
+    def test_kpnext(self, inline, setup_data):
+        assert False
 
-    def test_arnext(self):
-        self.fail()
+    def test_lsnext(self, inline, setup_data):
+        assert False
 
-    def test_vlnext(self):
-        self.fail()
+    def test_arnext(self, inline, setup_data):
+        assert False
 
-    def test_centrx(self):
-        self.fail()
+    def test_vlnext(self, inline, setup_data):
+        assert False
 
-    def test_centry(self):
-        self.fail()
+    def test_centrx(self, inline, setup_data):
+        assert False
 
-    def test_centrz(self):
-        self.fail()
+    def test_centry(self, inline, setup_data):
+        assert False
 
-    def test_centrxyz(self):
-        self.fail()
+    def test_centrz(self, inline, setup_data):
+        assert False
 
-    def test_nx(self):
-        self.fail()
+    def test_centrxyz(self, inline, setup_data):
+        assert False
 
-    def test_ny(self):
-        self.fail()
+    def test_nx(self, inline, setup_data):
+        assert False
 
-    def test_nz(self):
-        self.fail()
+    def test_ny(self, inline, setup_data):
+        assert False
 
-    def test_nxyz(self):
-        self.fail()
+    def test_nz(self, inline, setup_data):
+        assert False
 
-    def test_kx(self):
-        self.fail()
+    def test_nxyz(self, inline, setup_data):
+        assert False
 
-    def test_ky(self):
-        self.fail()
+    def test_kx(self, inline, setup_data):
+        assert False
 
-    def test_kz(self):
-        self.fail()
+    def test_ky(self, inline, setup_data):
+        assert False
 
-    def test_kxyz(self):
-        self.fail()
+    def test_kz(self, inline, setup_data):
+        assert False
 
-    def test__check_lfrac(self):
-        self.fail()
+    def test_kxyz(self, inline, setup_data):
+        assert False
 
-    def test__raise_if_not_line(self):
-        self.fail()
+    def test__check_lfrac(self, inline, setup_data):
+        assert False
 
-    def test_lx(self):
-        self.fail()
+    def test__raise_if_not_line(self, inline, setup_data):
+        assert False
 
-    def test_ly(self):
-        self.fail()
+    def test_lx(self, inline, setup_data):
+        assert False
 
-    def test_lz(self):
-        self.fail()
+    def test_ly(self, inline, setup_data):
+        assert False
 
-    def test_lxyz(self):
-        self.fail()
+    def test_lz(self, inline, setup_data):
+        assert False
 
-    def test_node(self):
-        self.fail()
+    def test_lxyz(self, inline, setup_data):
+        assert False
 
-    def test_kp(self):
-        self.fail()
+    def test_node(self, inline, setup_data):
+        assert False
 
-    def test_distnd(self):
-        self.fail()
+    def test_kp(self, inline, setup_data):
+        assert False
 
-    def test_distkp(self):
-        self.fail()
+    def test_distnd(self, inline, setup_data):
+        assert False
 
-    def test_disten(self):
-        self.fail()
+    def test_distkp(self, inline, setup_data):
+        assert False
 
-    def test_anglen(self):
-        self.fail()
+    def test_disten(self, inline, setup_data):
+        assert False
 
-    def test_anglek(self):
-        self.fail()
+    def test_anglen(self, inline, setup_data):
+        assert False
 
-    def test_nnear(self):
-        self.fail()
+    def test_anglek(self, inline, setup_data):
+        assert False
 
-    def test_knear(self):
-        self.fail()
+    def test_nnear(self, inline, setup_data):
+        assert False
 
-    def test_enearn(self):
-        self.fail()
+    def test_knear(self, inline, setup_data):
+        assert False
 
-    def test_ux(self):
-        self.fail()
+    def test_enearn(self, inline, setup_data):
+        assert False
 
-    def test_uy(self):
-        self.fail()
+    def test_ux(self, inline, setup_data):
+        assert False
 
-    def test_uz(self):
-        self.fail()
+    def test_uy(self, inline, setup_data):
+        assert False
 
-    def test_uxyz(self):
-        self.fail()
+    def test_uz(self, inline, setup_data):
+        assert False
+
+    def test_uxyz(self, inline, setup_data):
+        assert False

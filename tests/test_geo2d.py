@@ -5,12 +5,10 @@ Created on Tue Sep 10 15:03:12 2019
 @author: Nathanael Jöhrmann
 """
 import pytest
-import pyansys
 import geo2d
 
-# def setup_module(module):
 
-flag_create_plots = False
+flag_create_plots = True
 
 rotation_angle = 0.20
 subs_width = 4
@@ -21,37 +19,26 @@ roi_width = 2
 roi_height = 1
 
 
-@pytest.fixture(scope='session')
-def setup_ansys(tmp_path_factory):
-    path = tmp_path_factory.getbasetemp()
-    ansys = pyansys.Mapdl(override=True, interactive_plotting=True,
-                          run_location=path, loglevel='ERROR')
-    yield ansys
-    # ansys.open_gui()
-    ansys.exit()
+@pytest.fixture(scope='class')
+def do_plot(setup_ansys):
+    yield
+    if flag_create_plots:
+        plot(setup_ansys)
 
 
 @pytest.fixture(scope='class')
-def circle(setup_ansys):
+def circle(setup_ansys, do_plot):
     circle = geo2d.Circle(setup_ansys, 1, 80)
     circle.create()
     yield circle
 
 
 @pytest.fixture(scope='class')
-def film_with_roi(setup_ansys):
+def film_with_roi(setup_ansys, do_plot):
     film_with_roi = geo2d.FilmWithROI(setup_ansys, film_width, film_height,
                                       roi_width, roi_height, rotation_angle)
     film_with_roi.create()
     yield film_with_roi
-
-
-@pytest.fixture(scope='class')
-def mapdl(setup_ansys):
-    yield setup_ansys
-    if flag_create_plots:
-        plot(setup_ansys)
-    setup_ansys.clear()
 
 
 def plot(ansys):
