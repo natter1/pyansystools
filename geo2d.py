@@ -5,6 +5,7 @@ Provides classes to create and handle 2D geometry models in ANSYS via pyansys
 Classes:
 
     Point
+    Point2D
     Geometry2d
     Square
     Film_with_roi
@@ -15,19 +16,32 @@ Classes:
 import copy
 import math
 
-
 class Point:
     """
-    Class representing a 2D point.
+    Standard 3D point
     """
-
-    def __init__(self, x=0, y=0):
+    def __init__(self, x=0, y=0, z=0):
         self.x = x
         self.y = y
+        self.z = z
 
     def shift_by(self, point):
         self.x += point.x
         self.y += point.y
+        self.z += point.z
+
+    def get_list(self):
+        return [self.x, self.y, self.z]
+
+class Point2D(Point):
+    """
+    Class representing a 2D point.
+    """
+    def __init__(self, x=0, y=0):
+        super().__init__(x, y, z=0)
+
+    def shift_by(self, point):
+        super().shift_by(Point(self.x, self.y, z=0))
 
     def get_list(self):
         return [self.x, self.y]
@@ -46,7 +60,7 @@ class Geometry2d:
     for each specific geometry (like Square).
     """
 
-    def __init__(self, mapdl, rotation_angle=0, destination=Point(0, 0)):
+    def __init__(self, mapdl, rotation_angle=0, destination=Point2D(0, 0)):
         """
         Should be called inside subclasses __init__.
 
@@ -58,7 +72,7 @@ class Geometry2d:
             Angle about which the geometry should be rotated inside ANSYS.
             Rotation is done with axis in z through Geometry._destination.
             Default value = 0
-        destination : Point
+        destination : Point2D
             Position inside ANSYS, where geometry should be created.
         """
         self._mapdl = mapdl
@@ -185,7 +199,7 @@ class Geometry2d:
         keypoint_number : int
             Ansys keypoint number of the keypoint to check.
 
-        point : Point
+        point : Point2D
             Position where keypoint is expected.
 
         tol : float (optional)
@@ -208,7 +222,7 @@ class Geometry2d:
 
         Parameters
         ----------
-        point : Point
+        point : Point2D
             Destination coordinates for geometry.
         """
         self._destination.x = point.x
@@ -253,7 +267,7 @@ class Polygon(Geometry2d):
     """
 
     def __init__(self, mapdl, raw_points,
-                 rotation_angle=0, destination=Point(0, 0)):
+                 rotation_angle=0, destination=Point2D(0, 0)):
         super().__init__(mapdl, rotation_angle, destination)
         self._raw_points = raw_points
         # calc_raw_points not needed here. But in future maybe use it,
@@ -316,7 +330,7 @@ class Rectangle(Polygon):
     A rectangle geometry with 4 keypoints, 4 lines and one area.
     """
 
-    def __init__(self, mapdl, b, h, rotation_angle=0, destination=Point(0, 0)):
+    def __init__(self, mapdl, b, h, rotation_angle=0, destination=Point2D(0, 0)):
         # super().__init__(mapdl, rotation_angle,  destination)
         self._b = b
         self._h = h
@@ -325,10 +339,10 @@ class Rectangle(Polygon):
 
     def _calc_raw_points(self):
         self._raw_points = []
-        self._raw_points.append(Point(0, 0))
-        self._raw_points.append(Point(0, self._h))
-        self._raw_points.append(Point(self._b, self._h))
-        self._raw_points.append(Point(self._b, 0))
+        self._raw_points.append(Point2D(0, 0))
+        self._raw_points.append(Point2D(0, self._h))
+        self._raw_points.append(Point2D(self._b, self._h))
+        self._raw_points.append(Point2D(self._b, 0))
 
     def mesh_custom(self, ndiv_width, ndiv_height, ratio_width=1, ratio_heigh=1):
         self._mapdl.prep7()
@@ -347,7 +361,7 @@ class Circle(Polygon):
 
     # todo: better name for parts
     def __init__(self, mapdl, radius, parts,
-                 rotation_angle=0, destination=Point(0, 0)):
+                 rotation_angle=0, destination=Point2D(0, 0)):
         self._r = radius
         self._parts = parts
         self._calc_raw_points()
@@ -361,12 +375,12 @@ class Circle(Polygon):
             # start left -> x = -r*cos(a)
             x = -self._r * math.cos(i * (2 * math.pi / self._parts))
             y = self._r * math.sin(i * (2 * math.pi / self._parts))
-            self._raw_points.append(Point(x, y))
+            self._raw_points.append(Point2D(x, y))
 
 
 class FilmWithROI(Geometry2d):
     def __init__(self, mapdl, radius, height, roi_width, roi_height,
-                 rotation_angle=0, destination=Point(0, 0)):
+                 rotation_angle=0, destination=Point2D(0, 0)):
         super().__init__(mapdl, rotation_angle, destination)
         self._r = radius
         self._h = height
@@ -381,22 +395,22 @@ class FilmWithROI(Geometry2d):
 
     def _calc_raw_points(self):
         self._raw_points.clear()
-        self._raw_points.append(Point(0, 0))
+        self._raw_points.append(Point2D(0, 0))
 
         #  for line between film and roi:
-        self._raw_points.append(Point(0, self._h - self._roi_height))
-        support_point = Point()  # used to create spline
+        self._raw_points.append(Point2D(0, self._h - self._roi_height))
+        support_point = Point2D()  # used to create spline
         support_point.x = 2 / 3 * self._roi_width
         support_point.y = self._h - 5 / 6 * self._roi_height
         self._raw_points.append(support_point)
-        self._raw_points.append(Point(self._roi_width, self._h))
+        self._raw_points.append(Point2D(self._roi_width, self._h))
         #  ------------------------------
 
-        self._raw_points.append(Point(self._r, self._h))
-        self._raw_points.append(Point(self._r, 0))
+        self._raw_points.append(Point2D(self._r, self._h))
+        self._raw_points.append(Point2D(self._r, 0))
 
         #  for missing keypoint of roi:
-        self._raw_points.append(Point(0, self._h))
+        self._raw_points.append(Point2D(0, self._h))
 
     def _create_lines(self):
         self._create_film_lines()
@@ -482,7 +496,7 @@ class Tip(Geometry2d):
     """
 
     def __init__(self, mapdl, shape_coefficients,
-                 rotation_angle=0, destination=Point(0, 0)):
+                 rotation_angle=0, destination=Point2D(0, 0)):
         """
         Initilize Tip-Instance and calculate points.
             Parameters
@@ -496,7 +510,7 @@ class Tip(Geometry2d):
                 Angle about which the geometry should be rotated inside ANSYS.
                 Rotation is done with axis in z through Geometry._destination.
                 Default value = 0
-            destination : Point
+            destination : Point2D
                 Position inside ANSYS, where geometry should be created.
         """
         super().__init__(mapdl, rotation_angle, destination)
@@ -511,13 +525,13 @@ class Tip(Geometry2d):
     def _calc_raw_points(self):
         self._raw_points.clear()
 
-        self._raw_points.append(Point(0, 0))
-        self._raw_points.append(Point(0, 1500))
-        self._raw_points.append(Point(self._calc_tip_radius(1000), 1500))
+        self._raw_points.append(Point2D(0, 0))
+        self._raw_points.append(Point2D(0, 1500))
+        self._raw_points.append(Point2D(self._calc_tip_radius(1000), 1500))
 
         for i in reversed(range(1, self._n_splines + 1)):
             y = 1000 * pow(i / self._n_splines, 2)
-            self._raw_points.append(Point(self._calc_tip_radius(y), y))
+            self._raw_points.append(Point2D(self._calc_tip_radius(y), y))
 
     def _create_lines(self):
         k = self.keypoints
