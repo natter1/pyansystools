@@ -41,7 +41,9 @@ class Point2D(Point):
         super().__init__(x, y, z=0)
 
     def shift_by(self, point):
-        super().shift_by(Point(self.x, self.y, z=0))
+        self.x += point.x
+        self.y += point.y
+#        super().shift_by(Point(self.x, self.y, z=0))
 
     def get_list(self):
         return [self.x, self.y]
