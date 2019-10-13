@@ -1,57 +1,122 @@
 import pytest
+from enum import Enum, auto
+from inline import Inline
+from inline import Status
 
-from inline import Inline as Inline
-from inline import Status as Status
+
+class TestCase(Enum):
+    """
+    Enumeration for selection test cases.
+    """
+    ZERO = auto()
+    TOOLARGE = auto()
+    UNSELECTED = auto()
+    SELECTED =auto()
+
+# [test case, expected result]
+select_params = [[TestCase.ZERO, Status.UNDEFINED],
+                 [TestCase.TOOLARGE, Status.UNDEFINED],
+                 [TestCase.UNSELECTED, Status.UNSELECTED],
+                 [TestCase.SELECTED, Status.SELECTED]]
+
+select_ids = ['ZERO',
+              'TOOLARGE',
+              'UNSELECTED',
+              'SELECTED']
+
+class Data(list):
+    @property
+    def selected(self):
+        return min(self)
+
+    @property
+    def unselected(self):
+        return max(self)
+
+    @property
+    def too_large(self):
+        return 10^6  # max(self)+1
+
+    def get_case_data(self, case):
+        if case == TestCase.ZERO:
+            return 0
+        elif case == TestCase.TOOLARGE:
+            return self.too_large
+        elif case == TestCase.UNSELECTED:
+            return self.unselected
+        elif case == TestCase.SELECTED:
+            return self.selected
+        raise  # todo: specific exception
+
+    def get_select_test_data(self):
+        return [0, self.selected, self.unselected, self.invalid]
+
+    def get_expected_select_results(self):
+        return [Status.UNDEFINED,
+                Status.SELECTED,
+                Status.UNSELECTED,
+                Status.UNDEFINED]
+
 
 @pytest.fixture(scope='session')
-def inline(setup_ansys):
-    yield Inline(setup_ansys)
+def inline(ansys):
+    yield Inline(ansys)
+
 
 @pytest.fixture(scope='class')
-def setup_data(setup_ansys):
-    setup_ansys.prep7()
-    # todo: change to dictionary
-    k1 = setup_ansys.k("", 0, 0, 0)
-    k2 = setup_ansys.k("", 1, 0, 0)
-    k3 = setup_ansys.k("", 0, 1, 0)
-    k4 = setup_ansys.k("", 1, 1, 1)
-    k5 = setup_ansys.k("", -1, -1, -1)
-    l1 = setup_ansys.l(k1, k2)
-    l2 = setup_ansys.l(k2, k3)
-    a1 = setup_ansys.a(k1, k2, k3)
-    a2 = setup_ansys.a(k2, k3, k4)
+def setup_data(ansys):
+    ansys.prep7()
+    k = Data()
+    l = Data()
+    a = Data()
+    v = Data()
+    n = Data()
+    k.append(ansys.k("", 0, 0, 0))
+    k.append(ansys.k("", 1, 0, 0))
+    k.append(ansys.k("", 0, 1, 0))
+    k.append(ansys.k("", 1, 1, 1))
+    k.append(ansys.k("", -1, -1, -1))
+    l.append(ansys.l(*k[0:2]))
+    l.append(ansys.l(*k[1:3]))
+    a.append(ansys.a(*k[0:3]))
+    a.append(ansys.a(*k[1:4]))
     # todo: add returnvalue to mapdl.v()
-    v1 = setup_ansys.v(k1, k2, k3, k4)
-    v2 = setup_ansys.v(k1, k2, k3, k5)
+    v.append(ansys.v(*k[0:4]))
+    v.append(ansys.v(*k[0:3], k[4]))
     # todo: add returnvalue to mapdl.n()
-    n1 = setup_ansys.n("", 0, 0, 0)
-    n2 = setup_ansys.n("", 1, 0, 0)
-    n3 = setup_ansys.n("", 1, 1, 0)
-    n4 = setup_ansys.n("", 0, 1, 1)
+    n.append(ansys.n("", 0, 0, 0))
+    n.append(ansys.n("", 1, 0, 0))
+    n.append(ansys.n("", 1, 1, 0))
+    n.append(ansys.n("", 0, 1, 1))
 
-    setup_ansys.et("", 183)
-    e1 = setup_ansys.e(1, 2,3, 4)
-    yield
-    setup_ansys.clear()
-
-
-@pytest.fixture(scope='function')
-def select_one(setup_ansys):
-    setup_ansys.nsel("S", "NODE", "", 1)
-    setup_ansys.ksel("S", "KP", "", 1)
-    setup_ansys.lsel("S", "LINE", "", 1)
-    setup_ansys.asel("S", "AREA", "", 1)
-    setup_ansys.vsel("S", "VOLU", "", 1)
-    setup_ansys.esel("S", "ELEM", "", 1)
+    ansys.et("", 183)
+    e1 = ansys.e(1, 2, 3, 4)
+    yield [k, l, a, v, n]
+    ansys.clear()
 
 
 @pytest.fixture(scope='function')
-def select_all(setup_ansys):
-    setup_ansys.allsel()
+def select_one(ansys):
+    ansys.ksel("S", "KP", "", 1)
+    ansys.lsel("S", "LINE", "", 1)
+    ansys.asel("S", "AREA", "", 1)
+    ansys.vsel("S", "VOLU", "", 1)
+    ansys.nsel("S", "NODE", "", 1)
+    ansys.esel("S", "ELEM", "", 1)
+
+
+@pytest.fixture(scope='function')
+def select_all(ansys):
+    ansys.allsel()
+
+
+@pytest.fixture(scope='function', params=select_params, ids=select_ids)
+def select_task(select_one, request):
+    return request.param
 
 
 class TestInline:
-    def test__read_inline(self, inline, setup_data, select_one):
+    def test__read_inline(self, inline, select_one):
         result = inline._read_inline("3")
         assert result == 3
     # todo: parametrize
@@ -65,20 +130,20 @@ class TestInline:
         assert inline.esel(1) == Status.SELECTED
         # assert inline.esel(2) == Status.UNSELECTED
 
-    def test_ksel(self, inline, setup_data, select_one):
-        assert inline.ksel(0) == Status.UNDEFINED
-        assert inline.ksel(1) == Status.SELECTED
-        assert inline.ksel(2) == Status.UNSELECTED
+    def test_ksel(self, inline, setup_data, select_task):
+        k = setup_data[0].get_case_data(select_task[0])
+        expected = select_task[1]
+        assert inline.ksel(k) == expected
 
-    def test_lsel(self, inline, setup_data, select_one):
-        assert inline.lsel(0) == Status.UNDEFINED
-        assert inline.lsel(1) == Status.SELECTED
-        assert inline.lsel(2) == Status.UNSELECTED
+    def test_lsel(self, inline, setup_data, select_task):
+        l = setup_data[1].get_case_data(select_task[0])
+        expected = select_task[1]
+        assert inline.lsel(l) == expected
 
-    def test_asel(self, inline, setup_data, select_one):
-        assert inline.asel(0) == Status.UNDEFINED
-        assert inline.asel(1) == Status.SELECTED
-        assert inline.asel(2) == Status.UNSELECTED
+    def test_asel(self, inline, setup_data, select_task):
+        a = setup_data[2].get_case_data(select_task[0])
+        expected = select_task[1]
+        assert inline.asel(a) == expected
 
     def test_vsel(self, inline, setup_data, select_one):
         assert inline.vsel(0) == Status.UNDEFINED

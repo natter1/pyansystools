@@ -20,22 +20,22 @@ roi_height = 1
 
 
 @pytest.fixture(scope='class')
-def do_plot(setup_ansys):
+def do_plot(ansys):
     yield
     if flag_create_plots:
-        plot(setup_ansys)
+        plot(ansys)
 
 
 @pytest.fixture(scope='class')
-def circle(setup_ansys, do_plot):
-    circle = geo2d.Circle(setup_ansys, 1, 80)
+def circle(ansys, do_plot):
+    circle = geo2d.Circle(ansys, 1, 80)
     circle.create()
     yield circle
 
 
 @pytest.fixture(scope='class')
-def film_with_roi(setup_ansys, do_plot):
-    film_with_roi = geo2d.FilmWithROI(setup_ansys, film_width, film_height,
+def film_with_roi(ansys, do_plot):
+    film_with_roi = geo2d.FilmWithROI(ansys, film_width, film_height,
                                       roi_width, roi_height, rotation_angle)
     film_with_roi.create()
     yield film_with_roi
