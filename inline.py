@@ -32,7 +32,7 @@ class Inline:
         :return: float
         """
         line = self._ansys.run("__inline__={}".format(str_inline))
-        return float(re.search(r"(?<==).*", line).group(0))
+        return float(re.search(r"(?<=__INLINE__ =).*", line).group(0))
 
     # ========================================================================
     # ============================ entity status =============================
@@ -423,9 +423,9 @@ class Inline:
     # ========================================================================
     def anglen(self, n1, n2, n3):
         """
-        Subtended angle between two lines.
-        (defined by three nodes where n1 is the vertex node)
-        Default is in radians (see the *AFUN command to select degrees).
+        Subtended angle between two lines, defined by three nodes
+        where n1 is the vertex node. Default is in radians.
+        (see the *AFUN command to select degrees).
         :param n1: int
         :param n2: int
         :param n3: int
@@ -465,7 +465,7 @@ class Inline:
         :param k: int
         :return: float
         """
-        result = self._read_inline("nnear({})".format(n))
+        result = self._read_inline("knear({})".format(k))
         return int(result)
 
     def enearn(self, n):
@@ -512,7 +512,7 @@ class Inline:
 
     def uy(self, n):
         """
-        UX structural displacement at node N
+        UY structural displacement at node N
         :param n: int
         :return: float
         """
@@ -521,7 +521,7 @@ class Inline:
 
     def uz(self, n):
         """
-        UX structural displacement at node N
+        UZ structural displacement at node N
         :param n: int
         :return: float
         """

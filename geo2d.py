@@ -25,6 +25,12 @@ class Point:
         self.y = y
         self.z = z
 
+    def __eq__(self, other):
+        """Overrides the default implementation"""
+        if isinstance(other, Point):
+            return self.get_list() == other.get_list()
+        return NotImplemented
+
     def shift_by(self, point):
         self.x += point.x
         self.y += point.y
