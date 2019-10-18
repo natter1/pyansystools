@@ -7,7 +7,7 @@ Creates/overwrites ANSYS-Paramter `__inline__'!
 from enum import IntEnum
 import re
 import pyansys
-from geo2d import Point as Point
+from .geo2d import Point as Point
 
 
 class Status(IntEnum):
@@ -31,7 +31,7 @@ class Inline:
             String containing the complete inline-function
         :return: float
         """
-        line = self._ansys.run("__inline__={}".format(str_inline))
+        line = self._ansys.run(f"__inline__={str_inline}")
         return float(re.search(r"(?<=__INLINE__ =).*", line).group(0))
 
     # ========================================================================
@@ -45,7 +45,7 @@ class Inline:
         :return: Status(IntEnum)
             (Status.UNSELECTED=-1, Status.UNDEFINED=0, Status.SELECTED=1)
         """
-        result = self._read_inline("nsel({})".format(n))
+        result = self._read_inline(f"nsel({n})")
         return Status(result)
 
     def esel(self, e):
@@ -56,7 +56,7 @@ class Inline:
         :return: Status(IntEnum)
             (Status.UNSELECTED=-1, Status.UNDEFINED=0, Status.SELECTED=1)
         """
-        result = self._read_inline("esel({})".format(e))
+        result = self._read_inline(f"esel({e})")
         return Status(result)
 
     def ksel(self, k):
@@ -67,7 +67,7 @@ class Inline:
         :return: Status(IntEnum)
             (Status.UNSELECTED=-1, Status.UNDEFINED=0, Status.SELECTED=1)
         """
-        result = self._read_inline("ksel({})".format(k))
+        result = self._read_inline(f"ksel({k})")
         return Status(result)
 
     def lsel(self, l):
@@ -78,7 +78,7 @@ class Inline:
         :return: Status(IntEnum)
             (Status.UNSELECTED=-1, Status.UNDEFINED=0, Status.SELECTED=1)
         """
-        result = self._read_inline("lsel({})".format(l))
+        result = self._read_inline(f"lsel({l})")
         return Status(result)
 
     def asel(self, a):
@@ -89,7 +89,7 @@ class Inline:
         :return: Status(IntEnum)
             (Status.UNSELECTED=-1, Status.UNDEFINED=0, Status.SELECTED=1)
         """
-        result = self._read_inline("asel({})".format(a))
+        result = self._read_inline(f"asel({a})")
         return Status(result)
 
     def vsel(self, v):
@@ -100,7 +100,7 @@ class Inline:
         :return: Status(IntEnum)
             (Status.UNSELECTED=-1, Status.UNDEFINED=0, Status.SELECTED=1)
         """
-        result = self._read_inline("vsel({})".format(v))
+        result = self._read_inline(f"vsel({v})")
         return Status(result)
 
     # ========================================================================
@@ -112,7 +112,7 @@ class Inline:
         :param n: int
         :return: int
         """
-        result = self._read_inline("ndnext({})".format(n))
+        result = self._read_inline(f"ndnext({n})")
         return int(result)
 
     def elnext(self, e):
@@ -121,7 +121,7 @@ class Inline:
         :param e: int
         :return: int
         """
-        result = self._read_inline("elnext({})".format(e))
+        result = self._read_inline(f"elnext({e})")
         return int(result)
 
     def kpnext(self, k):
@@ -130,7 +130,7 @@ class Inline:
         :param k: int
         :return: int
         """
-        result = self._read_inline("kpnext({})".format(k))
+        result = self._read_inline(f"kpnext({k})")
         return int(result)
 
     def lsnext(self, l):
@@ -139,7 +139,7 @@ class Inline:
         :param l: int
         :return: int
         """
-        result = self._read_inline("lsnext({})".format(l))
+        result = self._read_inline(f"lsnext({l})")
         return int(result)
 
     def arnext(self, a):
@@ -148,7 +148,7 @@ class Inline:
         :param a: int
         :return: int
         """
-        result = self._read_inline("arnext({})".format(a))
+        result = self._read_inline(f"arnext({a})")
         return int(result)
 
     def vlnext(self, v):
@@ -157,7 +157,7 @@ class Inline:
         :param v: int
         :return: int
         """
-        result = self._read_inline("vlnext({})".format(v))
+        result = self._read_inline(f"vlnext({v})")
         return int(result)
 
     # ========================================================================
@@ -169,7 +169,7 @@ class Inline:
         :param e: int
         :return: float
         """
-        result = self._read_inline("centrx({})".format(e))
+        result = self._read_inline(f"centrx({e})")
         return result
 
     def centry(self, e):
@@ -178,7 +178,7 @@ class Inline:
         :param e: int
         :return: float
         """
-        result = self._read_inline("centry({})".format(e))
+        result = self._read_inline(f"centry({e})")
         return result
 
     def centrz(self, e):
@@ -187,7 +187,7 @@ class Inline:
         :param e: int
         :return: float
         """
-        result = self._read_inline("centrz({})".format(e))
+        result = self._read_inline(f"centrz({e})")
         return result
 
     # ========================== not part of ANSYS! ==========================
@@ -197,9 +197,9 @@ class Inline:
         :param e: int
         :return: Point
         """
-        x = self._read_inline("centrx({})".format(e))
-        y = self._read_inline("centry({})".format(e))
-        z = self._read_inline("centrz({})".format(e))
+        x = self._read_inline(f"centrx({e})")
+        y = self._read_inline(f"centry({e})")
+        z = self._read_inline(f"centrz({e})")
         return Point(x, y, z)
     # ========================= not part of ANSYS! END ========================
 
@@ -209,7 +209,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("nx({})".format(n))
+        result = self._read_inline(f"nx({n})")
         return result
 
     def ny(self, n):
@@ -218,7 +218,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("ny({})".format(n))
+        result = self._read_inline(f"ny({n})")
         return result
 
     def nz(self, n):
@@ -227,7 +227,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("nz({})".format(n))
+        result = self._read_inline(f"nz({n})")
         return result
 
     # ========================== not part of ANSYS! ==========================
@@ -237,9 +237,9 @@ class Inline:
         :param n: int
         :return: Point
         """
-        x = self._read_inline("nx({})".format(n))
-        y = self._read_inline("ny({})".format(n))
-        z = self._read_inline("nz({})".format(n))
+        x = self._read_inline(f"nx({n})")
+        y = self._read_inline(f"ny({n})")
+        z = self._read_inline(f"nz({n})")
         return Point(x, y, z)
     # ========================= not part of ANSYS! END ========================
 
@@ -249,7 +249,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("kx({})".format(n))
+        result = self._read_inline(f"kx({n})")
         return result
 
     def ky(self, n):
@@ -258,7 +258,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("ky({})".format(n))
+        result = self._read_inline(f"ky({n})")
         return result
 
     def kz(self, n):
@@ -267,7 +267,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("kz({})".format(n))
+        result = self._read_inline(f"kz({n})")
         return result
 
     # ========================== not part of ANSYS! ==========================
@@ -277,9 +277,9 @@ class Inline:
         :param n: int
         :return: Point
         """
-        x = self._read_inline("kx({})".format(n))
-        y = self._read_inline("ky({})".format(n))
-        z = self._read_inline("kz({})".format(n))
+        x = self._read_inline(f"kx({n})")
+        y = self._read_inline(f"ky({n})")
+        z = self._read_inline(f"kz({n})")
         return Point(x, y, z)
     # ========================= not part of ANSYS! END ========================
 
@@ -312,7 +312,7 @@ class Inline:
         """
         self._check_lfrac(lfrac)
         self._raise_if_not_line(l)
-        result = self._read_inline("lx({},{})".format(l, lfrac))
+        result = self._read_inline(f"lx({l},{lfrac})")
         return result
 
     def ly(self, l, lfrac):
@@ -324,7 +324,7 @@ class Inline:
         """
         self._check_lfrac(lfrac)
         self._raise_if_not_line(l)
-        result = self._read_inline("ly({},{})".format(l, lfrac))
+        result = self._read_inline(f"ly({l},{lfrac})")
         return result
 
     def lz(self, l, lfrac):
@@ -336,7 +336,7 @@ class Inline:
         """
         self._check_lfrac(lfrac)
         self._raise_if_not_line(l)
-        result = self._read_inline("lz({},{})".format(l, lfrac))
+        result = self._read_inline(f"lz({l},{lfrac})")
         return result
 
     # ========================== not part of ANSYS! ==========================
@@ -349,9 +349,9 @@ class Inline:
         """
         self._check_lfrac(lfrac)
         self._raise_if_not_line(l)
-        x = self._read_inline("lx({},{})".format(l, lfrac))
-        y = self._read_inline("ly({},{})".format(l, lfrac))
-        z = self._read_inline("lz({},{})".format(l, lfrac))
+        x = self._read_inline(f"lx({l},{lfrac})")
+        y = self._read_inline(f"ly({l},{lfrac})")
+        z = self._read_inline(f"lz({l},{lfrac})")
         return Point(x, y, z)
     # ========================= not part of ANSYS! END ========================
 
@@ -367,7 +367,7 @@ class Inline:
         :param z: float
         :return: int
         """
-        result = self._read_inline("node({},{},{})".format(x, y, z))
+        result = self._read_inline(f"node({x},{y},{z})")
         # todo: raise exception, if result == 0 (no node found)
         return int(result)
 
@@ -380,7 +380,7 @@ class Inline:
         :param z: float
         :return: int
         """
-        result = self._read_inline("kp({},{},{})".format(x, y, z))
+        result = self._read_inline(f"kp({x},{y},{z})")
         # todo: raise exception, if result == 0 (no node found)
         return int(result)
 
@@ -394,17 +394,17 @@ class Inline:
         :param n2: int
         :return: float
         """
-        result = self._read_inline("distnd({},{})".format(n1, n2))
+        result = self._read_inline(f"distnd({n1},{n2})")
         return result
 
     def distkp(self, k1, k2):
         """
         Distance between keypoints k1 and k2.
-        :param n1: int
-        :param n2: int
+        :param k1: int
+        :param k2: int
         :return: float
         """
-        result = self._read_inline("distkp({},{})".format(k1, k2))
+        result = self._read_inline(f"distkp({k1},{k2})")
         return result
 
     def disten(self, e, n):
@@ -415,7 +415,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("disten({},{})".format(e, n))
+        result = self._read_inline(f"disten({e},{n})")
         return result
 
     # ========================================================================
@@ -431,7 +431,7 @@ class Inline:
         :param n3: int
         :return: float
         """
-        result = self._read_inline("anglen({},{},{})".format(n1, n2, n3))
+        result = self._read_inline(f"anglen({n1},{n2},{n3})")
         return result
 
     def anglek(self, k1, k2, k3):
@@ -439,12 +439,12 @@ class Inline:
         Subtended angle between two lines.
         (defined by three keypoints where k1 is the vertex keypoint)
         Default is in radians (see the *AFUN command to select degrees).
-        :param n1: int
-        :param n2: int
-        :param n3: int
+        :param k1: int
+        :param k2: int
+        :param k3: int
         :return: float
         """
-        result = self._read_inline("anglek({},{},{})".format(k1, k2, k3))
+        result = self._read_inline(f"anglek({k1},{k2},{k3})")
         return result
 
     # ========================================================================
@@ -456,7 +456,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("nnear({})".format(n))
+        result = self._read_inline(f"nnear({n})")
         return int(result)
 
     def knear(self, k):
@@ -465,7 +465,7 @@ class Inline:
         :param k: int
         :return: float
         """
-        result = self._read_inline("knear({})".format(k))
+        result = self._read_inline(f"knear({k})")
         return int(result)
 
     def enearn(self, n):
@@ -475,7 +475,7 @@ class Inline:
         :param n: int
         :return: int
         """
-        result = self._read_inline("enearn({})".format(n))
+        result = self._read_inline(f"enearn({n})")
         return int(result)
 
     # ========================================================================
@@ -507,7 +507,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("ux({})".format(n))
+        result = self._read_inline(f"ux({n})")
         return result
 
     def uy(self, n):
@@ -516,7 +516,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("uy({})".format(n))
+        result = self._read_inline(f"uy({n})")
         return result
 
     def uz(self, n):
@@ -525,7 +525,7 @@ class Inline:
         :param n: int
         :return: float
         """
-        result = self._read_inline("uz({})".format(n))
+        result = self._read_inline(f"uz({n})")
         return result
 
     # ========================== not part of ANSYS! ==========================
@@ -535,9 +535,9 @@ class Inline:
         :param n: int
         :return: Point
         """
-        x = self._read_inline("ux({})".format(n))
-        y = self._read_inline("uy({})".format(n))
-        z = self._read_inline("uz({})".format(n))
+        x = self._read_inline(f"ux({n})")
+        y = self._read_inline(f"uy({n})")
+        z = self._read_inline(f"uz({n})")
         return Point(x, y, z)
     # ========================= not part of ANSYS! END ========================
 

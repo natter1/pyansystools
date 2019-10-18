@@ -1,10 +1,10 @@
 import pytest
 import math
 
-from inline import Inline
-from inline import Status
+from pyansystools.inline import Inline
+from pyansystools.inline import Status
 from testcases import Data, TestCase
-from geo2d import Point
+from pyansystools.geo2d import Point
 
 
 # [test case, expected result]
