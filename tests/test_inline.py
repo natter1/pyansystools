@@ -114,9 +114,6 @@ class TestInline:
         e = setup_data['e'].get_case_data(select_task[0])
         expected = select_task[1]
         assert inline.esel(e) == expected
-        # assert inline.esel(0) == Status.UNDEFINED
-        # assert inline.esel(1) == Status.SELECTED
-        # assert inline.esel(2) == Status.UNSELECTED
 
     def test_ksel(self, inline, setup_data, select_task):
         k = setup_data['k'].get_case_data(select_task[0])
