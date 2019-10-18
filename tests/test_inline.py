@@ -1,9 +1,12 @@
+"""
+@author: Nathanael Jöhrmann
+"""
 import pytest
 import math
 
 from pyansystools.inline import Inline
 from pyansystools.inline import Status
-from testcases import Data, TestCase
+from .testcases import Data, TestCase
 from pyansystools.geo2d import Point
 
 

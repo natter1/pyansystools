@@ -1,3 +1,6 @@
+"""
+@author: Nathanael Jöhrmann
+"""
 from enum import Enum, auto
 
 

@@ -41,15 +41,13 @@ class Macros:
             # TARGE169 is used to represent various 2-D 'target' surfaces
             # for the associated contact elements
             # (CONTA171, CONTA172, and CONTA175):
-            self._mapdl.et("", 169)
-            n_target169 = self._mapdl.get_float("ETYP", 0, "NUM", "MAX")
+            n_target169 = self._mapdl.et("", 169)
 
         if not n_conta172:
             # CONTA172 is used to represent contact and sliding between
             # 2-D target surfaces (TARGE169) and a deformable surface,
             # defined by this element:
-            self._mapdl.et("", 172)
-            n_conta172 = self._mapdl.get_float("ETYP", 0, "NUM", "MAX")
+            n_conta172 = self._mapdl.et("", 172)
             # Close gap/reduce penetration with auto CNOF:
             self._mapdl.keyopt(n_conta172, 5, 3)
             # KEYOPT(9) ... Effect of initial penetration or gap;
@@ -67,7 +65,9 @@ class Macros:
         # Target and contact elements that make up a contact pair
         # are associated with each other via a shared real constant set
         self._mapdl.real(next_real)
-
+        # todo: FKN; FTOLN
+        # self._mapdl.r(next_real, "", "", 20.0)
+        self._mapdl.r(next_real, "", "", "", -1)
         # Generate the target surface
         # Sets the element type attribute pointer:
         self._mapdl.type(n_target169)

@@ -1,3 +1,6 @@
+"""
+@author: Nathanael Jöhrmann
+"""
 import pytest
 import pyansys
 
