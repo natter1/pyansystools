@@ -1,9 +1,10 @@
 """
 @author: Nathanael Jöhrmann
 """
+import pytest
 from enum import Enum, auto
 
-
+@pytest.mark.filterwarnings('ignore::PytestCollectionWarning')
 class TestCase(Enum):
     """
     Enumeration for selection test cases.

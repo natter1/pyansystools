@@ -5,8 +5,8 @@ Created on Tue Sep 10 15:03:12 2019
 @author: Nathanael Jöhrmann
 """
 import pytest
-import geo2d
-
+import pyansystools.geo2d as geo2d
+#from pyansystools.testcases import Data, TestCase
 
 flag_create_plots = True
 
