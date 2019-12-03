@@ -608,6 +608,7 @@ class Tip(Geometry2d):
         # Part of input file? Calc useful value somehow?
         # 31 ... from exp. calibration
         # -> smallest indentation depth where areafunction is valid
+        # todo:
         min_fitted_i = 31
 
         if i >= min_fitted_i:  # use experimental area fit function

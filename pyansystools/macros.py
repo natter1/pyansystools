@@ -48,6 +48,10 @@ class Macros:
             # 2-D target surfaces (TARGE169) and a deformable surface,
             # defined by this element:
             n_conta172 = self._mapdl.et("", 172)
+            # todo: test only
+            # KEYOPT(2) ... Contact algorithm: 3 ... Lagrange multiplier on contact normal and penalty on tangent
+            # self._mapdl.keyopt(n_conta172, 2, 3)
+            # todo end
             # Close gap/reduce penetration with auto CNOF:
             self._mapdl.keyopt(n_conta172, 5, 3)
             # KEYOPT(9) ... Effect of initial penetration or gap;
