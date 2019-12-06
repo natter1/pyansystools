@@ -4,6 +4,7 @@
 import pytest
 from enum import Enum, auto
 
+
 @pytest.mark.filterwarnings('ignore::PytestCollectionWarning')
 class TestCase(Enum):
     """
@@ -15,6 +16,7 @@ class TestCase(Enum):
     SELECTED = auto()
     MIN = auto()
     MAX = auto()
+
 
 class Data(list):
     @property

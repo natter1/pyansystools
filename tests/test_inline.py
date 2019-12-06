@@ -98,9 +98,11 @@ def select_all(ansys):
 def select_task(select_one, request):
     return request.param
 
+
 @pytest.fixture(scope='function', params=next_params, ids=next_ids)
 def next_task(select_all, request):
     return request.param
+
 
 class TestInline:
     def test__read_inline(self, inline, select_one):
@@ -178,7 +180,6 @@ class TestInline:
         assert inline.centrz(setup_data['e'].min) == 0.25
 
     def test_centrxyz(self, inline, setup_data):
-        dummy = inline.centrxyz(setup_data['e'].min)
         assert inline.centrxyz(setup_data['e'].min) == Point(0.5, 0.5, 0.25)
 
     def test_nx(self, inline, setup_data):
