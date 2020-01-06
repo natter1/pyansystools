@@ -25,7 +25,7 @@ Class Inline
 ............
 This class enables access to most of ANSYS APDL inline-functions.
 
-.. code::python
+.. code:: python
 
     import pyansys
     from inline import Inline
@@ -37,7 +37,7 @@ This class enables access to most of ANSYS APDL inline-functions.
 
 It also provides some convienient functions not part of APDL:
 
-.. code::python
+.. code:: python
     inline.kxyz(k: int) -> Point
     inline.lxyz(l: int, lfrac: float) -> Point
     inline.uxyz(, n: int) -> Point
