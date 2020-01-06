@@ -6,14 +6,17 @@ Collection of Macro-like functions for APDL ANSYS via pyansys.
 """
 
 import numbers
+from typing import Union
+
+from pyansys import Mapdl
 
 
 # todo: self -> cls ?
 class Macros:
-    def __init__(self, mapdl):
+    def __init__(self, mapdl: Mapdl):
         self._mapdl = mapdl
 
-    def select_lines(self, lines):
+    def select_lines(self, lines: Union[int, list]):
         """
         Selects the given line numbers (lines) in ANSYS.
 
@@ -28,10 +31,10 @@ class Macros:
         for line_number in lines:
             self._mapdl.lsel("A", "LINE", "", line_number)
 
-    def create_contact_pair_for_lines_asymmetric(self, target_lines,
-                                                 contact_lines,
-                                                 n_target169=None,
-                                                 n_conta172=None):
+    def create_contact_pair_for_lines_asymmetric(self, target_lines: Union[int, list],
+                                                 contact_lines: Union[int, list],
+                                                 n_target169: int = None,
+                                                 n_conta172: int =None):
         """
         Create asymmetric contact pair between given line_numbers.
         Make sure to create nodes for those lines before calling this.
@@ -95,9 +98,10 @@ class Macros:
 
         return n_target169, n_conta172
 
-    def create_contact_pair_for_lines_symmetric(self, lines_a, lines_b,
-                                                n_target169=None,
-                                                n_conta172=None):
+    def create_contact_pair_for_lines_symmetric(self, lines_a: Union[int, list],
+                                                lines_b: Union[int, list],
+                                                n_target169: int = None,
+                                                n_conta172: int = None):
         """
         Create symmetric contact pairs between given line_numbers.
         Make sure to create nodes for those lines before calling this.

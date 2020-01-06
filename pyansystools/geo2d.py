@@ -16,12 +16,14 @@ Classes:
 import copy
 import math
 
+from pyansys import Mapdl
+
 
 class Point:
     """
     Standard 3D point
     """
-    def __init__(self, x=0, y=0, z=0):
+    def __init__(self, x: float = 0, y: float = 0, z: float = 0):
         self.x = x
         self.y = y
         self.z = z
@@ -32,7 +34,7 @@ class Point:
             return self.get_list() == other.get_list()
         return NotImplemented
 
-    def shift_by(self, point):
+    def shift_by(self, point: "Point"):
         self.x += point.x
         self.y += point.y
         self.z += point.z
@@ -48,7 +50,7 @@ class Point2D(Point):
     def __init__(self, x=0, y=0):
         super().__init__(x, y, z=0)
 
-    def shift_by(self, point):
+    def shift_by(self, point: "Point2D") -> None:
         self.x += point.x
         self.y += point.y
 #        super().shift_by(Point(self.x, self.y, z=0))
@@ -56,34 +58,30 @@ class Point2D(Point):
     def get_list(self):
         return [self.x, self.y]
 
-    def rotate_radians(self, angle):
+    def rotate_radians(self, angle: float):
         x = self.x * math.cos(angle) - self.y * math.sin(angle)
         y = self.x * math.sin(angle) + self.y * math.cos(angle)
         self.x = x
         self.y = y
 
 
-class Geometry2d:
+class Geometry2d():
     """
     Geometry2d provides some basic functionality to handle 2D geometries
     using the module pyansys for ANSYS. This class is meant to be subclassed
     for each specific geometry (like Square).
     """
 
-    def __init__(self, mapdl, rotation_angle=0, destination=Point2D(0, 0)):
+    def __init__(self, mapdl: Mapdl, rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)):
         """
         Should be called inside subclasses __init__.
 
-        Parameters
-        ----------
-        mapdl : Mapdl
-            Pyansys Mapdl object to control ANSYS.
-        rotation_angle : float (optional)
+        :param mapdl: Pyansys Mapdl object to control ANSYS.
+        :param rotation_angle: float (optional)
             Angle about which the geometry should be rotated inside ANSYS.
             Rotation is done with axis in z through Geometry._destination.
             Default value = 0
-        destination : Point2D
-            Position inside ANSYS, where geometry should be created.
+        :param destination: Position inside ANSYS, where geometry should be created.
         """
         self._mapdl = mapdl
         self._rotation_angle = rotation_angle
@@ -102,17 +100,12 @@ class Geometry2d:
         of them is defined by a subclass of Geometry2d inside _calc_points().
         Make sure you are in PREP7 befor calling this function.
 
-        Parameters
-        ----------
-
-        Returns
-        -------
-        None.
+        :return: None
         """
         for point in self.points:
             self.keypoints.append(self._mapdl.k("", *point.get_list()))
 
-    def _create_keypoints_merged(self, geometry2d):
+    def _create_keypoints_merged(self, geometry2d: "Geometry2d"):
         """
         Creates Keypoints for the geometry in ansys. The number and position
         of them is defined by a subclass of Geometry2d inside _calc_points().
@@ -121,14 +114,9 @@ class Geometry2d:
         that keypoint is used instead, thus merging both geometries.
         Make sure you are in PREP7 befor calling this function.
 
-        Parameters
-        ----------
-        geometry2d : Geometry2d
-            Geometry to which the new area should be glued (sharing KPs/Lines).
-
-        Returns
-        -------
-        None.
+        :param geometry2d:
+            Geometry to which new area should be glued (sharing KPs/lines).
+        :return: None
         """
         for point in self.points:
             found_keypoint = False
@@ -140,7 +128,7 @@ class Geometry2d:
                 self.keypoints.append(self._mapdl.k("", *point.get_list()))
 
     def set_element_type(self, et):
-        pass
+        pass  # todo
 
     def set_material_number(self, mat):
         assert self.areas is not [], "Can't set material number without area"

@@ -263,9 +263,9 @@ class TestInline:
         assert inline.uy(1) == 0  # todo: no solution was done jet
 
     def test_uz(self, inline, setup_data):
-        inline._ansys.set_log_level('ERROR')
+        inline._mapdl.set_log_level('ERROR')
         assert inline.uz(1) == 0  # todo: no solution was done jet
-        inline._ansys.set_log_level('WARN')
+        inline._mapdl.set_log_level('WARN')
 
     def test_uxyz(self, inline, setup_data):
         assert inline.uxyz(1) == Point(0, 0, 0)
