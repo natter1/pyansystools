@@ -58,7 +58,7 @@ def setup_data(ansys):
     # todo: add returnvalue to mapdl.v()
     v.append(ansys.v(*k[0:4]))
     v.append(ansys.v(*k[0:3], k[4]))
-    # todo: add returnvalue to mapdl.n()
+    # todo: add returnvalue to mapdl.k()
     n.append(ansys.n("", 0, 0, 0))
     n.append(ansys.n("", 1, 0, 0))
     n.append(ansys.n("", 1, 1, 0))
@@ -71,7 +71,7 @@ def setup_data(ansys):
 
     l.append(ansys.get_float('LINE', 0, 'NUM', 'MAXD'))
     a.append(ansys.get_float('AREA', 0, 'NUM', 'MAXD'))
-    yield {'k': k, 'l': l, 'a': a, 'v': v, 'n': n, 'e': e}
+    yield {'k': k, 'l': l, 'a': a, 'v': v, 'k': n, 'e': e}
     ansys.clear()
 
 
@@ -111,7 +111,7 @@ class TestInline:
 
     # todo: parametrize
     def test_nsel(self, inline, setup_data, select_task):
-        n = setup_data['n'].get_case_data(select_task[0])
+        n = setup_data['k'].get_case_data(select_task[0])
         expected = select_task[1]
         assert inline.nsel(n) == expected
 
@@ -141,7 +141,7 @@ class TestInline:
         assert inline.vsel(v) == expected
 
     def test_ndnext(self, inline, setup_data, next_task):
-        n = setup_data['n'].get_case_data(next_task[0])
+        n = setup_data['k'].get_case_data(next_task[0])
         expected = next_task[1]
         assert inline.ndnext(n) == expected
 
@@ -183,16 +183,16 @@ class TestInline:
         assert inline.centrxyz(setup_data['e'].min) == Point(0.5, 0.5, 0.25)
 
     def test_nx(self, inline, setup_data):
-        assert inline.nx(setup_data['n'].max) == 0
+        assert inline.nx(setup_data['k'].max) == 0
 
     def test_ny(self, inline, setup_data):
-        assert inline.ny(setup_data['n'].max) == 1
+        assert inline.ny(setup_data['k'].max) == 1
 
     def test_nz(self, inline, setup_data):
-        assert inline.nz(setup_data['n'].max) == -1
+        assert inline.nz(setup_data['k'].max) == -1
 
     def test_nxyz(self, inline, setup_data):
-        assert inline.nxyz(setup_data['n'].max) == Point(0, 1, -1)
+        assert inline.nxyz(setup_data['k'].max) == Point(0, 1, -1)
 
     def test_kx(self, inline, setup_data):
         assert inline.kx(setup_data['k'].max) == -1

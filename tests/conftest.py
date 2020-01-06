@@ -8,11 +8,11 @@ import pyansys
 @pytest.fixture(scope='session')
 def ansys(tmp_path_factory):
     path = tmp_path_factory.getbasetemp()
-    ansys = pyansys.Mapdl(override=True, interactive_plotting=True,
+    mapdl = pyansys.Mapdl(override=True, interactive_plotting=True,
                           run_location=path, loglevel='ERROR')
-    yield ansys
+    yield mapdl
     # ansys.open_gui()
-    ansys.exit()
+    mapdl.exit()
 
 
 @pytest.fixture(scope='class')

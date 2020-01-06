@@ -8,14 +8,15 @@ Provides classes to simplify the work with ANSYS APDL using the python modul pya
 * ...
 
 ## Getting Started
-
 ...
 
-
 ### Prerequisites
-
 * Python >= 3.6
 *  working installation of pyansys (including access to ANSYS).
+
+### Class Inline
+This class enables access to most of ANSYS APDL inline-functions. It also provides some convienient functions not part of APDL:
+*
 
 
 ## Author

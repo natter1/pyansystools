@@ -660,7 +660,7 @@ class Tip(Geometry2d):
         # todo: add parameter for area fit function
         self._shape_coefficients = shape_coefficients
         self._n_splines = 20
-        # make sure, _n_splines is of form 5*n+1 !
+        # make sure, _n_splines is of form 5*k+1 !
         self._n_splines = (self._n_splines // 5) * 5 + 1
         self.line_left = None
         self.line_top = None

@@ -41,7 +41,7 @@ class Inline:
     # ========================================================================
     def nsel(self, n: int) -> Status:
         """
-        Status of node n (UNSELECTED==-1, UNDEFINED==0, SELECTED==1)
+        Status of node k (UNSELECTED==-1, UNDEFINED==0, SELECTED==1)
 
         :param n: node number in ANSYS
         :return: Status
@@ -104,7 +104,7 @@ class Inline:
     # ========================================================================
     def ndnext(self, n: int) -> int:
         """
-        Next selected node having a node number greater than n
+        Next selected node having a node number greater than k
 
         :param n: int
         :return: int
@@ -211,7 +211,7 @@ class Inline:
 
     def nx(self, n: int) -> float:
         """
-        X-coordinate of node n in the active coordinate system.
+        X-coordinate of node k in the active coordinate system.
 
         :param n: int
         :return: float
@@ -221,7 +221,7 @@ class Inline:
 
     def ny(self, n: int) -> float:
         """
-        Y-coordinate of node n in the active coordinate system.
+        Y-coordinate of node k in the active coordinate system.
 
         :param n: int
         :return: float
@@ -231,7 +231,7 @@ class Inline:
 
     def nz(self, n: int) -> float:
         """
-        Z-coordinate of node n in the active coordinate system.
+        Z-coordinate of node k in the active coordinate system.
 
         :param n: int
         :return: float
@@ -242,7 +242,7 @@ class Inline:
     # ========================== not part of ANSYS! ==========================
     def nxyz(self, n: int) -> Point:
         """
-        Coordinates of node n in the active coordinate system.
+        Coordinates of node k in the active coordinate system.
 
         :param n: int
         :return: Point
@@ -253,47 +253,47 @@ class Inline:
         return Point(x, y, z)
     # ========================= not part of ANSYS! END ========================
 
-    def kx(self, n: int) -> float:
+    def kx(self, k: int) -> float:
         """
-        X-coordinate of keypoint n in the active coordinate system.
+        X-coordinate of keypoint k in the active coordinate system.
 
-        :param n: int
+        :param k: int
         :return: float
         """
-        result = self._read_inline(f"kx({n})")
+        result = self._read_inline(f"kx({k})")
         return result
 
-    def ky(self, n: int) -> float:
+    def ky(self, k: int) -> float:
         """
-        Y-coordinate of keypoint n in the active coordinate system.
+        Y-coordinate of keypoint k in the active coordinate system.
 
-        :param n: int
+        :param k: int
         :return: float
         """
-        result = self._read_inline(f"ky({n})")
+        result = self._read_inline(f"ky({k})")
         return result
 
-    def kz(self, n: int) -> float:
+    def kz(self, k: int) -> float:
         """
-        Z-coordinate of keypoint n in the active coordinate system.
+        Z-coordinate of keypoint k in the active coordinate system.
 
-        :param n: int
+        :param k: int
         :return: float
         """
-        result = self._read_inline(f"kz({n})")
+        result = self._read_inline(f"kz({k})")
         return result
 
     # ========================== not part of ANSYS! ==========================
-    def kxyz(self, n: int) -> Point:
+    def kxyz(self, k: int) -> Point:
         """
-        Coordinates of keypoint n in the active coordinate system.
+        Coordinates of keypoint k in the active coordinate system.
 
-        :param n: int
+        :param k: int
         :return: Point
         """
-        x = self._read_inline(f"kx({n})")
-        y = self._read_inline(f"ky({n})")
-        z = self._read_inline(f"kz({n})")
+        x = self._read_inline(f"kx({k})")
+        y = self._read_inline(f"ky({k})")
+        z = self._read_inline(f"kz({k})")
         return Point(x, y, z)
     # ========================= not part of ANSYS! END ========================
 
@@ -433,7 +433,7 @@ class Inline:
 
     def disten(self, e: int, n: int) -> float:
         """
-        Distance between the centroid of element e and node n.
+        Distance between the centroid of element e and node k.
         Centroid is determined from the selected nodes on the element.
 
         :param e: int
@@ -479,7 +479,7 @@ class Inline:
     # ========================================================================
     def nnear(self, n: int) -> int:
         """
-        Selected node nearest node n.
+        Selected node nearest node k.
 
         :param n: int
         :return: float
@@ -499,7 +499,7 @@ class Inline:
 
     def enearn(self, n: int) -> int:
         """
-        Selected element nearest node n.
+        Selected element nearest node k.
         The element position is calculated from the selected nodes.
 
         :param n: int
