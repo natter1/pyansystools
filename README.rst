@@ -4,9 +4,10 @@ pyansystools
     :target: https://pypi.org/project/pyansystools/
 
 .. image:: http://img.shields.io/:license-MIT-blue.svg?style=flat-square
-    :target: http://badges.mit-license.org
+    :target: http://badges.MIT-license.org
 
-This module provides classes to simplify the work python module pyansys:
+This module provides classes to simplify use of python module pyansys:
+
 * Inline (easy python interface to use APDL inline functions)
 * Geometry2d and its subclasses (create 2D geometries accesible as python objects)
 * Macros (collection of common tasks available as methods)
