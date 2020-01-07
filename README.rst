@@ -1,6 +1,9 @@
 pyansystools
 ============
-.. image:: http://img.shields.io/:license-mit-blue.svg?style=flat-square
+.. image:: https://img.shields.io/pypi/v/pyansystools.svg
+    :target: https://pypi.org/project/pyansystools/
+
+.. image:: http://img.shields.io/:license-MIT-blue.svg?style=flat-square
     :target: http://badges.mit-license.org
 
 This module provides classes to simplify the work python module pyansys:
