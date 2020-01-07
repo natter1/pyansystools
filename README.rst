@@ -23,11 +23,37 @@ Prerequisites
 * `pyansys <https://github.com/akaszynski/pyansys>`
 
 
-Quick Guide
+Examples
 -----------
 
-Class Inline
+Module geo2d
 ............
+
+Class Rectangle
+,,,,,,,,,,,,,,,
+Geometry2d provides some basic functionality to handle 2D geometries. This class is meant to be subclassed for each specific geometry (like Rectangle).
+
+Class Rectangle
+,,,,,,,,,,,,,,,
+.. code:: python
+
+    import pyansys
+    from pyansystools.geo2d import Rectangle
+
+    mapdl = pyansys.Mapdl()
+
+    rectangle = Rectangle(mapdl, b=10, h=30)
+    rectangle.set_rotation_in_degree(45)
+    rectangle.create()  # create keypoints, lines and area in ANSYS
+    ...
+
+
+Module inline
+.............
+
+Class Inline
+,,,,,,,,,,,,,,,
+
 This class enables access to most of ANSYS APDL inline-functions.
 
 .. code:: python
