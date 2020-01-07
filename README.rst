@@ -14,7 +14,7 @@ This module provides classes to simplify the work python module pyansys:
 
 Installation
 ------------
-...pip install pyansystools
+pip install pyansystools
 
 Prerequisites
 .............
