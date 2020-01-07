@@ -11,8 +11,7 @@ This module provides classes to simplify the work python module pyansys:
 
 Installation
 ------------
-...
-
+...pip install pyansystools
 Prerequisites
 .............
 * Python >= 3.6
@@ -21,6 +20,7 @@ Prerequisites
 
 Quick Guide
 -----------
+
 Class Inline
 ............
 This class enables access to most of ANSYS APDL inline-functions.
@@ -38,6 +38,7 @@ This class enables access to most of ANSYS APDL inline-functions.
 It also provides some convienient functions not part of APDL:
 
 .. code:: python
+
     inline.kxyz(k: int) -> Point
     inline.lxyz(l: int, lfrac: float) -> Point
     inline.uxyz(, n: int) -> Point
@@ -48,3 +49,7 @@ License and Acknowledgments
 ``pyansystools`` is licensed under the MIT license.
 
 This module, ``pyansystools`` makes no commercial claim over ANSYS whatsoever.
+
+
+API Documentation
+=================
