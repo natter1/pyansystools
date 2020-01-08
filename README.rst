@@ -29,7 +29,7 @@ Examples
 Module geo2d
 ............
 
-Class Rectangle
+Class Geometry2d
 ,,,,,,,,,,,,,,,
 Geometry2d provides some basic functionality to handle 2D geometries. This class is meant to be subclassed for each specific geometry (like Rectangle).
 
@@ -37,15 +37,20 @@ Class Rectangle
 ,,,,,,,,,,,,,,,
 .. code:: python
 
-    import pyansys
-    from pyansystools.geo2d import Rectangle
-
-    mapdl = pyansys.Mapdl()
+    mapdl = pyansys.Mapdl(override=True, interactive_plotting=True)
 
     rectangle = Rectangle(mapdl, b=10, h=30)
     rectangle.set_rotation_in_degree(45)
     rectangle.create()  # create keypoints, lines and area in ANSYS
-    ...
+
+    mapdl.pnum("KP", 1)
+    mapdl.pnum("LINE", 1)
+    mapdl.pnum("AREA", 1)
+    mapdl.gplot()
+
+    mapdl.exit()
+
+.. figure:: https://github.com/natter1/pyansystools/raw/master/docs/images/example_geo2d_rectangle_01.png
 
 
 Module inline
