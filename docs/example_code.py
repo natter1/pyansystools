@@ -1,5 +1,10 @@
 import pyansys
-from pyansystools.geo2d import Geometry2d, Point2D, Rectangle
+from pyansystools.geo2d import Geometry2d, Point2D, Rectangle, Circle
+import math
+
+
+def main():
+    example_geo2d_rectangle_02()
 
 
 # geometry2d is meant to be subclassed; it does not define any keypoints etc. to create
@@ -27,10 +32,6 @@ def example_geometry2d():
     geometry.set_material_number(mat=3)
 
 
-def main():
-    example_geo2d_rectangle_01()
-
-
 def example_geo2d_rectangle_01():
     mapdl = pyansys.Mapdl(override=True, interactive_plotting=True,
                           jobname="example_geo2d_rectangle_01")
@@ -52,6 +53,25 @@ def example_geo2d_rectangle_01():
     # mapdl.show("PNG")
     mapdl.exit()
 
+
+def example_geo2d_rectangle_02():
+    mapdl = pyansys.Mapdl(override=True, interactive_plotting=True,
+                          jobname="example_geo2d_rectangle_02")
+
+    parts = 12
+    polygon = Circle(mapdl, 40, parts)
+    polygon.create()
+    rectangles = []
+
+    for i, rotation in enumerate(range(0, 359, round(360/parts))):
+        rectangle = Rectangle(mapdl, b=30, h=10)
+        rectangles.append(rectangle)
+        rectangle.set_destination(polygon.points[i])
+        rectangle.set_rotation_in_degree(180-rotation+(180/parts))
+        rectangle.create()  # create keypoints, lines and area in ANSYS
+
+    mapdl.gplot()
+    mapdl.exit()
 
 if __name__ == '__main__':
     main()

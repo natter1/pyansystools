@@ -23,14 +23,11 @@ Prerequisites
 * `pyansys <https://github.com/akaszynski/pyansys>`
 
 
-Examples
------------
-
-Module geo2d
-............
+Examples - Module geo2d
+-----------------------
 
 Class Geometry2d
-,,,,,,,,,,,,,,,,
+................
 Geometry2d provides some basic functionality to handle 2D geometries. This class is meant to be subclassed for each specific geometry (like Rectangle).
 
 .. code:: python
@@ -67,8 +64,11 @@ All subclasses have to implement at least:
 Look at class Rectangle for an easy example how to subclass correctly.
 
 Class Rectangle
-,,,,,,,,,,,,,,,
+...............
 .. code:: python
+
+    import pyansys
+    from pyansystools.geo2d import Rectangle
 
     mapdl = pyansys.Mapdl(override=True, interactive_plotting=True)
 
@@ -88,6 +88,33 @@ Class Rectangle
     mapdl.exit()
 
 .. figure:: https://github.com/natter1/pyansystools/raw/master/docs/images/example_geo2d_rectangle_01.png
+    :width: 500pt
+
+
+Class Circle
+............
+
+.. code:: python
+
+    import pyansys
+    from pyansystools.geo2d import Rectangle, Circle
+
+    parts = 12
+    polygon = Circle(mapdl, 40, parts)
+    polygon.create()
+    rectangles = []
+
+    for i, rotation in enumerate(range(0, 359, round(360/parts))):
+        rectangle = Rectangle(mapdl, b=30, h=10)
+        rectangles.append(rectangle)
+        rectangle.set_destination(polygon.points[i])
+        rectangle.set_rotation_in_degree(180-rotation+(180/parts))
+        rectangle.create()  # create keypoints, lines and area in ANSYS
+
+    mapdl.gplot()
+    mapdl.exit()
+
+.. figure:: https://github.com/natter1/pyansystools/raw/master/docs/images/example_geo2d_rectangle_02.png
     :width: 500pt
 
 Module inline
