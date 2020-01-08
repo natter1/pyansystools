@@ -30,8 +30,41 @@ Module geo2d
 ............
 
 Class Geometry2d
-,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,
 Geometry2d provides some basic functionality to handle 2D geometries. This class is meant to be subclassed for each specific geometry (like Rectangle).
+
+.. code:: python
+
+    import pyansys
+    from pyansystools.geo2d import Geometry2d, Point2D, Rectangle
+    geometry = Geometry2d()
+
+    # following methods do not change already created data inside ANSYS
+    geometry.set_rotation(radians=1.0)
+    geometry.set_rotation_in_degree(degrees=20.0)
+    geometry.set_destination(point=Point2D(2, -3))
+
+    geometry.create()  # this creates the keypoints, lines and areas in ANSYS
+    # Warning: Changes to geometry won't be transfered to ANSYS after this call.
+    # If you call create() a second time, a new geometry is created!
+
+    # Beware! Some APDL-functions change keypoint numbers.
+    # In current version, Geometry2D is not updated automatically.
+    geometry.keypoints  # list of ANSYS keypoint numbers
+    geometry.lines  # lit of ANSYS line numbers
+    geometry.areas  # list of ANSYS area numbers
+
+    geometry.select_lines()  # Selects all lines belonging to the geometry (deselecting all other lines).
+    geometry.select_areas()  # Selects all areas belonging to the geometry (deselecting all other areas).
+
+    geometry.set_material_number(mat=3)
+
+All subclasses have to implement at least:
+    * __init__()
+    * _calc_raw_points()
+    * a method for meshing
+
+Look at class Rectangle for an easy example how to subclass correctly.
 
 Class Rectangle
 ,,,,,,,,,,,,,,,
@@ -43,6 +76,10 @@ Class Rectangle
     rectangle.set_rotation_in_degree(45)
     rectangle.create()  # create keypoints, lines and area in ANSYS
 
+    rectangle.set_element_type(mapdl.et("", "PLANE183"))
+    rectangle.mesh(10)
+    # or: rectangle.mesh_custom(...)
+
     mapdl.pnum("KP", 1)
     mapdl.pnum("LINE", 1)
     mapdl.pnum("AREA", 1)
@@ -51,7 +88,7 @@ Class Rectangle
     mapdl.exit()
 
 .. figure:: https://github.com/natter1/pyansystools/raw/master/docs/images/example_geo2d_rectangle_01.png
-
+    :width: 500pt
 
 Module inline
 .............

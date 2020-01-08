@@ -88,7 +88,7 @@ class Geometry2d():
         self._destination = copy.deepcopy(destination)
 
         self._raw_points = []  # basic positions of geometry
-        self.points = []  # actual positions including rotation and shift
+        self.points = []  # actual positions including degrees and shift
         self.keypoints = []  # ansys keypoint numbers
         self.lines = []  # ansys line numbers clockwise starting on left side
         self.areas = []  # ansys area numbers
@@ -128,7 +128,8 @@ class Geometry2d():
                 self.keypoints.append(self._mapdl.k("", *point.get_list()))
 
     def set_element_type(self, et):
-        pass  # todo
+        self.select_areas()
+        self._mapdl.aatt("", "", et)
 
     def set_material_number(self, mat):
         assert self.areas is not [], "Can't set material number without area"
@@ -212,17 +213,16 @@ class Geometry2d():
         return (math.isclose(x, point.x, abs_tol=tol)
                 and math.isclose(y, point.y, abs_tol=tol))
 
-    def set_destination(self, point):
+    def set_destination(self, point: Point) -> None:
         """
         Sets destination of geometry and recalc points.
         Use before calling create() or create_merged_to().
         Does not change already created data inside ANSYS.
 
-        Parameters
-        ----------
-        point : Point2D
-            Destination coordinates for geometry.
+        :param point: Destination coordinates for geometry.
+        :return: None
         """
+
         self._destination.x = point.x
         self._destination.y = point.y
         self._calc_points()
@@ -241,7 +241,7 @@ class Geometry2d():
         self._rotation_angle = radians
         self._calc_points()
 
-    def set_rotation_in_degree(self, rotation):
+    def set_rotation_in_degree(self, degrees):
         """
         Sets rotation_angle of geometry and recalc points.
         Use before calling create() or create_merged_to().
@@ -249,10 +249,10 @@ class Geometry2d():
 
         Parameters
         ----------
-        rotation : float
+        degrees : float
             Rotation of geometry in degrees.
         """
-        self.set_rotation(rotation / 180 * math.pi)
+        self.set_rotation(degrees / 180 * math.pi)
 
 
 class Polygon(Geometry2d):
@@ -260,7 +260,7 @@ class Polygon(Geometry2d):
     A polygonal geometry constructed with a list of points.
     The points should be given in a clockwise manner starting
     at bottom left. Also, the first point should be at (0,0) if
-    it shall be used as origin point (for rotation and destination).
+    it shall be used as origin point (for degrees and destination).
     There can be exceptions to this, for example when creating a circle.
     """
 
@@ -300,7 +300,7 @@ class Polygon(Geometry2d):
         super().select_lines()
         for line in self.lines:
             self._mapdl.lesize(line, "", "", nir)
-            super()._mesh()
+        super()._mesh()
 
     def create_merged_to(self, geometry2d):
         """
