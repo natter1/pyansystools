@@ -7,7 +7,7 @@ from pyansystools.geo2d import Geometry2d, Point2D, Rectangle, Isogon
 def main():
     example_geo2d_rectangle_01()
     time.sleep(1)  # short delay needed befor restart ANSYS
-    example_geo2d_rectangle_02()
+    example_geo2d_isogon_01()
 
 
 # geometry2d is meant to be subclassed; it does not define any keypoints etc. to create
@@ -38,7 +38,8 @@ def example_geometry2d():
     geometry.select_lines()  # Selects all lines belonging to the geometry (deselecting all other lines).
     geometry.select_areas()  # Selects all areas belonging to the geometry (deselecting all other areas).
 
-    geometry.set_material_number(mat=3)  # set
+    geometry.set_material_number(mat=3)
+    geometry.set_element_type(183)
 
 
 def example_geo2d_rectangle_01():
@@ -59,24 +60,24 @@ def example_geo2d_rectangle_01():
     mapdl.pnum("AREA", 1)
     mapdl.gplot()
 
-    # mapdl.show("PNG")
     mapdl.exit()
 
 
-def example_geo2d_rectangle_02():
+def example_geo2d_isogon_01():
     mapdl = pyansys.Mapdl(override=True, interactive_plotting=True,
-                          jobname="example_geo2d_rectangle_02")
+                          jobname="example_geo2d_isogon_01")
 
-    parts = 12
-    polygon = Isogon(mapdl, 40, parts)
-    polygon.create()
+    radius = 40
+    edges = 12
+    isogon = Isogon(mapdl, radius, edges)
+    isogon.create()
     rectangles = []
 
-    for i, rotation in enumerate(range(0, 359, round(360/parts))):
+    for i, rotation in enumerate(range(0, 359, round(360/edges))):
         rectangle = Rectangle(mapdl, width=30, height=10)
         rectangles.append(rectangle)
-        rectangle.set_destination(polygon.points[i])
-        rectangle.set_rotation_in_degree(180-rotation+(180/parts))
+        rectangle.set_destination(isogon.points[i])
+        rectangle.set_rotation_in_degree(180-rotation+(180/edges))
         rectangle.create()  # create keypoints, lines and area in ANSYS
 
     mapdl.gplot()

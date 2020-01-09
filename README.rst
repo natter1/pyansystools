@@ -67,7 +67,7 @@ Because inline functions can not run on its own in APDL, the Inline class needs 
 
 geo2d.py
 ........
-The geo2d module provides classes to help create 2D geometries an a human readable way.
+The geo2d module provides classes to help create 2D geometries in a human readable way.
 
 |
 
@@ -91,21 +91,25 @@ This class is meant to be subclassed for each specific geometry (like Rectangle)
 
 .. code:: python
 
-    import pyansys
-    from pyansystools.geo2d import Geometry2d, Point2D, Rectangle
-    geometry = Geometry2d()
+    mapdl = pyansys.Mapdl()
+    geometry = Geometry2d(mapdl)
+    # or with optional parameters:
+    geometry = Geometry2d(mapdl, rotation_angle=0.5, destination=Point2D(0, 1))
 
     # following methods do not change already created data inside ANSYS
     geometry.set_rotation(radians=1.0)
     geometry.set_rotation_in_degree(degrees=20.0)
     geometry.set_destination(point=Point2D(2, -3))
 
-    geometry.create()  # this creates the keypoints, lines and areas in ANSYS
+    geometry.create()  # this creates the keypoints, lines and areas in ANSYS.
+    # Note: Geometry2d does not implement create(), but enforces this method to all subclasses
     # Warning: Changes to geometry won't be transfered to ANSYS after this call.
-    # If you call create() a second time, a new geometry is created!
+    # If you call create() a second time, a new geometry or an error is created!
 
-    # Beware! Some APDL-functions change keypoint numbers.
+    # Beware! Some APDL functions change keypoint numbers.
     # In current version, Geometry2D is not updated automatically.
+    # Make sure to use below methods/attributes before such changes.
+
     geometry.keypoints  # list of ANSYS keypoint numbers
     geometry.lines  # lit of ANSYS line numbers
     geometry.areas  # list of ANSYS area numbers
@@ -114,6 +118,7 @@ This class is meant to be subclassed for each specific geometry (like Rectangle)
     geometry.select_areas()  # Selects all areas belonging to the geometry (deselecting all other areas).
 
     geometry.set_material_number(mat=3)
+    geometry.set_element_type(183)
 
 All subclasses have to implement at least:
     * __init__()
@@ -136,7 +141,7 @@ at bottom left.
     import pyansys
     from pyansystools.geo2d import Rectangle
 
-    mapdl = pyansys.Mapdl(override=True, interactive_plotting=True)
+    mapdl = pyansys.Mapdl()
     # there are several ways to give the list of points.
     # It should work, as long as each point can be unpacked in 2 coordinates.
     points = [Point2D(0, 0), Point2D(0, 3), Point2D(2, 4), Point2D(2.5, 1)]
@@ -167,9 +172,9 @@ Creates an Isogon (regular polygon) geometry.
 
 macros.py
 .........
-Collection of Macro-like functions for APDL ANSYS via pyansys.
+Collection of macro-like functions for APDL ANSYS via pyansys.
 Up till now, there are only macros to create contact pairs for lines (symmetric or asymmetric).
-Suggestions for mare macros are welcome.
+Suggestions for more macros are welcome.
 
 Examples
 --------
@@ -182,11 +187,12 @@ Created and mesh a rotated rectangle
 
     mapdl = pyansys.Mapdl(override=True, interactive_plotting=True)
 
-    rectangle = Rectangle(mapdl, b=10, h=30)
+    rectangle = Rectangle(mapdl, width=10, height=30)
     rectangle.set_rotation_in_degree(45)
+
     rectangle.create()  # create keypoints, lines and area in ANSYS
 
-    rectangle.set_element_type(mapdl.et("", "PLANE183"))
+    rectangle.set_element_type(mapdl.et("", 183))
     rectangle.mesh(10)
     # or: rectangle.mesh_custom(...)
 
@@ -208,22 +214,22 @@ Isogon with several rectangles (not merged)
     from pyansystools.geo2d import Rectangle, Isogon
 
     radius = 40
-    sides = 12
-    polygon = Isogon(mapdl, radius, sides)
-    polygon.create()
+    edges = 12
+    isogon = Isogon(mapdl, radius, edges)
+    isogon.create()
     rectangles = []
 
-    for i, rotation in enumerate(range(0, 359, round(360/sides))):
-        rectangle = Rectangle(mapdl, b=30, h=10)
+    for i, rotation in enumerate(range(0, 359, round(360/edges))):
+        rectangle = Rectangle(mapdl, width=30, height=10)
         rectangles.append(rectangle)
-        rectangle.set_destination(polygon.points[i])
-        rectangle.set_rotation_in_degree(180-rotation+(180/sides))
+        rectangle.set_destination(isogon.points[i])
+        rectangle.set_rotation_in_degree(180-rotation+(180/edges))
         rectangle.create()  # create keypoints, lines and area in ANSYS
 
     mapdl.gplot()
     mapdl.exit()
 
-.. figure:: https://github.com/natter1/pyansystools/raw/master/docs/images/example_geo2d_rectangle_02.png
+.. figure:: https://github.com/natter1/pyansystools/raw/master/docs/images/example_geo2d_isogon_01.png
     :width: 500pt
 
 Isogon with several rectangles (merged)
