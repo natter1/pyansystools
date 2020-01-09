@@ -28,7 +28,7 @@ def do_plot(ansys):
 
 @pytest.fixture(scope='class')
 def circle(ansys, do_plot):
-    circle = geo2d.Circle(ansys, 1, 80)
+    circle = geo2d.Isogon(ansys, 1, 80)
     circle.create()
     yield circle
 

@@ -12,16 +12,17 @@ Classes:
 
 @author: Nathanael Jöhrmann
 """
-
 import copy
 import math
+from abc import ABC, abstractmethod
+from typing import Union, Type, List
 
 from pyansys import Mapdl
 
 
 class Point:
     """
-    Standard 3D point
+    3D point
     """
     def __init__(self, x: float = 0, y: float = 0, z: float = 0):
         self.x = x
@@ -41,6 +42,10 @@ class Point:
 
     def get_list(self):
         return [self.x, self.y, self.z]
+
+    def __iter__(self):
+        for i in (self.x, self.y, self.z):
+            yield i
 
 
 class Point2D(Point):
@@ -64,12 +69,16 @@ class Point2D(Point):
         self.x = x
         self.y = y
 
+    def __iter__(self):
+        for i in (self.x, self.y):
+            yield i
 
-class Geometry2d():
+
+class Geometry2d(ABC):
     """
     Geometry2d provides some basic functionality to handle 2D geometries
-    using the module pyansys for ANSYS. This class is meant to be subclassed
-    for each specific geometry (like Square).
+    using the module pyansys for ANSYS. This class is an abstract base class
+    meant to be subclassed for each specific geometry (like Square).
     """
 
     def __init__(self, mapdl: Mapdl, rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)):
@@ -94,7 +103,87 @@ class Geometry2d():
         self.areas = []  # ansys area numbers
         self.component_name = ''
 
-    def _create_keypoints(self):
+    def set_element_type(self, et: Union[str, int]) -> None:
+        """
+        This function sets the element type for all areas belonging to the geometry-instance using APDL AATT.
+        Call this function after calling create() to make sure the areas exist, or call create() before
+        changing element type somewhere else e.g. by calling APDL AATT or TYPE.
+
+        :param et: Element type, e.g. 183 or 'plane183'
+        """
+        self.select_areas()
+        self._mapdl.aatt("", "", et)
+
+    def set_material_number(self, mat: Union[str, int]) -> None:
+        """
+        This function sets the element type for all areas belonging to the geometry-instance using APDL AATT.
+        Call this function after calling create() to make sure the areas exist.
+
+        :param mat:
+        """
+        assert self.areas is not [], "Can't set material number without area"
+        self._mapdl.prep7()
+        self._mapdl.asel("NONE")
+        for area in self.areas:
+            self._mapdl.asel("A", "AREA", area)
+        self._mapdl.aatt(mat)
+
+    def select_lines(self):
+        """
+        Selects all lines belonging to the geometry.
+        """
+        self._mapdl.lsel("none")
+        for line_number in self.lines:
+            self._mapdl.lsel("A", "LINE", "", line_number)
+
+    def select_areas(self):
+        """
+        Selects all areas belonging to the geometry.
+        """
+        self._mapdl.asel("none")
+        for area_number in self.areas:
+            self._mapdl.asel("A", "AREA", "", area_number)
+
+    def set_destination(self, point: Point) -> None:
+        """
+        Sets destination of geometry and recalc points.
+        Use before calling create() or create_merged_to().
+        Does not change already created data inside ANSYS.
+
+        :param point: Destination coordinates for geometry.
+        :return: None
+        """
+
+        self._destination.x = point.x
+        self._destination.y = point.y
+        self._calc_points()
+
+    def set_rotation(self, radians: float) -> None:
+        """
+        Sets rotation_angle of geometry and recalc points.
+        Use before calling create() or create_merged_to().
+        Does not change already created data inside ANSYS.
+
+        :param radians: Rotation of geometry in radians.
+        """
+        self._rotation_angle = radians
+        self._calc_points()
+
+    def set_rotation_in_degree(self, degrees) -> None:
+        """
+        Sets rotation_angle of geometry and recalc points.
+        Use before calling create() or create_merged_to().
+        Does not change already created data inside ANSYS.
+
+        :params degrees: Rotation of geometry in degrees.
+        """
+        self.set_rotation(degrees / 180 * math.pi)
+
+    @abstractmethod
+    def create(self):
+        pass
+
+    def _create_keypoints(self) -> None:
         """
         Creates Keypoints for the geometry in ansys. The number and position
         of them is defined by a subclass of Geometry2d inside _calc_points().
@@ -105,7 +194,7 @@ class Geometry2d():
         for point in self.points:
             self.keypoints.append(self._mapdl.k("", *point.get_list()))
 
-    def _create_keypoints_merged(self, geometry2d: "Geometry2d"):
+    def _create_keypoints_merged(self, geometry2d: Union["Geometry2d", Type["Geometry2d"]]) -> None:
         """
         Creates Keypoints for the geometry in ansys. The number and position
         of them is defined by a subclass of Geometry2d inside _calc_points().
@@ -126,18 +215,6 @@ class Geometry2d():
                     found_keypoint = True
             if not found_keypoint:
                 self.keypoints.append(self._mapdl.k("", *point.get_list()))
-
-    def set_element_type(self, et):
-        self.select_areas()
-        self._mapdl.aatt("", "", et)
-
-    def set_material_number(self, mat):
-        assert self.areas is not [], "Can't set material number without area"
-        self._mapdl.prep7()
-        self._mapdl.asel("NONE")
-        for area in self.areas:
-            self._mapdl.asel("A", "AREA", area)
-        self._mapdl.aatt(mat)
 
     def _calc_points(self):
         self.points = copy.deepcopy(self._raw_points)
@@ -173,86 +250,20 @@ class Geometry2d():
         # AMESH Generates nodes and area elements within areas
         self._mapdl.amesh("ALL")
 
-    def select_lines(self):
-        """
-        Selects all lines belonging to the geometry.
-        """
-        self._mapdl.lsel("none")
-        for line_number in self.lines:
-            self._mapdl.lsel("A", "LINE", "", line_number)
-
-    def select_areas(self):
-        """
-        Selects all areas belonging to the geometry.
-        """
-        self._mapdl.asel("none")
-        for area_number in self.areas:
-            self._mapdl.asel("A", "AREA", "", area_number)
-
-    def _check_keypoint_is_at_point(self, keypoint_number, point, tol=1e-6):
+    def _check_keypoint_is_at_point(self, keypoint_number: int, point: "Point2D", tol: float = 1e-6) -> bool:
         """
         Checks if keypoint is at the position point.
 
-        Parameters
-        ----------
-        keypoint_number : int
-            Ansys keypoint number of the keypoint to check.
-
-        point : Point2D
-            Position where keypoint is expected.
-
-        tol : float (optional)
+        :param keypoint_number: Ansys keypoint number of the keypoint to check.
+        :param point: Position where keypoint is expected.
+        :param tol: (optional)
             Absolute tolerance when comparing float values for x and y.
             Defaults to 1e-6
-        Returns
-        -------
-        Boolean.
         """
         x = self._mapdl.get_float("KP", keypoint_number, "LOC", "X")
         y = self._mapdl.get_float("KP", keypoint_number, "LOC", "Y")
         return (math.isclose(x, point.x, abs_tol=tol)
                 and math.isclose(y, point.y, abs_tol=tol))
-
-    def set_destination(self, point: Point) -> None:
-        """
-        Sets destination of geometry and recalc points.
-        Use before calling create() or create_merged_to().
-        Does not change already created data inside ANSYS.
-
-        :param point: Destination coordinates for geometry.
-        :return: None
-        """
-
-        self._destination.x = point.x
-        self._destination.y = point.y
-        self._calc_points()
-
-    def set_rotation(self, radians):
-        """
-        Sets rotation_angle of geometry and recalc points.
-        Use before calling create() or create_merged_to().
-        Does not change already created data inside ANSYS.
-
-        Parameters
-        ----------
-        radians : float
-            Rotation of geometry in radians.
-        """
-        self._rotation_angle = radians
-        self._calc_points()
-
-    def set_rotation_in_degree(self, degrees):
-        """
-        Sets rotation_angle of geometry and recalc points.
-        Use before calling create() or create_merged_to().
-        Does not change already created data inside ANSYS.
-
-        Parameters
-        ----------
-        degrees : float
-            Rotation of geometry in degrees.
-        """
-        self.set_rotation(degrees / 180 * math.pi)
 
 
 class Polygon(Geometry2d):
@@ -264,33 +275,34 @@ class Polygon(Geometry2d):
     There can be exceptions to this, for example when creating a circle.
     """
 
-    def __init__(self, mapdl, raw_points,
-                 rotation_angle=0, destination=Point2D(0, 0)):
+    def __init__(self, mapdl: Mapdl, raw_points: list,
+                 rotation_angle: float = 0, destination: "Point2D" = Point2D(0, 0)) -> None:
         super().__init__(mapdl, rotation_angle, destination)
-        self._raw_points = raw_points
+        self._raw_points = []
+        self._set_raw_points_from_input_points(raw_points)
         # calc_raw_points not needed here. But in future maybe use it,
         # to check, if points result in valid geometry (e.g. one area ...)
         # self._calc_raw_points()
         super()._calc_points()
 
-    def _create_lines(self):
+    def _create_lines(self) -> None:
         kp_count = len(self.keypoints)
         for i in range(0, kp_count):
             kp1 = self.keypoints[i]
             kp2 = self.keypoints[(i + 1) % kp_count]
             self.lines.append(self._mapdl.l(kp1, kp2))
 
-    def _create_area(self):
+    def _create_area(self) -> None:
         super().select_lines()
         self.areas.append(self._mapdl.al("ALL"))
 
-    def create(self):
+    def create(self) -> None:
         self._mapdl.prep7()
         self._create_keypoints()
         self._create_lines()
         self._create_area()
 
-    def mesh(self, nir):
+    def mesh(self, nir: int) -> None:
         """
         Default meshing for polygons.
         The parameter nir sets number of divisions for each line.
@@ -302,25 +314,24 @@ class Polygon(Geometry2d):
             self._mapdl.lesize(line, "", "", nir)
         super()._mesh()
 
-    def create_merged_to(self, geometry2d):
+    def create_merged_to(self, geometry2d: Type[Geometry2d]) -> None:
         """
         Use this to glue new area to another. Don't use lglue/aglue!
         That would also change KP-numbers, line numbers and area numbers
         inside ANSYS.
 
-        Parameters
-        ----------
-        geometry2d : Geometry2d
-            Geometry to which the new area should be glued (sharing KPs/Lines).
-
-        Returns
-        -------
-        None.
-
+        :param geometry2d: Geometry to which the new area should be glued (sharing KPs/Lines).
         """
         super()._create_keypoints_merged(geometry2d)
         self._create_lines()
         self._create_area()
+
+    def _set_raw_points_from_input_points(self, points: list) -> None:
+        """
+        Converts points to a list of Point2D and
+        """
+        for point in points:
+            self._raw_points.append(Point2D(*point))
 
 
 class Rectangle(Polygon):
@@ -328,10 +339,10 @@ class Rectangle(Polygon):
     A rectangle geometry with 4 keypoints, 4 lines and one area.
     """
 
-    def __init__(self, mapdl, b, h, rotation_angle=0, destination=Point2D(0, 0)):
-        # super().__init__(mapdl, rotation_angle,  destination)
-        self._b = b
-        self._h = h
+    def __init__(self, mapdl: Mapdl, width: float, height: float,
+                 rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
+        self._b = width
+        self._h = height
         self.line_left = None
         self.line_top = None
         self.line_right = None
@@ -340,44 +351,44 @@ class Rectangle(Polygon):
         self._calc_raw_points()
         super().__init__(mapdl, self._raw_points, rotation_angle, destination)
 
-    def _calc_raw_points(self):
-        self._raw_points = []
-        self._raw_points.append(Point2D(0, 0))
-        self._raw_points.append(Point2D(0, self._h))
-        self._raw_points.append(Point2D(self._b, self._h))
-        self._raw_points.append(Point2D(self._b, 0))
+    def _calc_raw_points(self) -> None:
+        self._raw_points = [
+            Point2D(0, 0),
+            Point2D(0, self._h),
+            Point2D(self._b, self._h),
+            Point2D(self._b, 0)
+        ]
 
-    def create(self):
+    def create(self) -> None:
         super().create()
         self.line_left = self.lines[0]
         self.line_top = self.lines[1]
         self.line_right = self.lines[2]
         self.line_bottom = self.lines[3]
 
-    def mesh_custom(self, ndiv_width, ndiv_height, ratio_width=1, ratio_heigh=1):
+    def mesh_custom(self, ndiv_width: int, ndiv_height: int, ratio_width: float = 1, ratio_height: float = 1):
         self._mapdl.prep7()
         super().select_lines()
-        self._mapdl.lesize(self.lines[0], "", "", ndiv_height, ratio_heigh)
-        self._mapdl.lesize(self.lines[2], "", "", ndiv_height, 1 / ratio_heigh)
+        self._mapdl.lesize(self.lines[0], "", "", ndiv_height, ratio_height)
+        self._mapdl.lesize(self.lines[2], "", "", ndiv_height, 1 / ratio_height)
         self._mapdl.lesize(self.lines[1], "", "", ndiv_width, ratio_width)
         self._mapdl.lesize(self.lines[3], "", "", ndiv_width, 1 / ratio_width)
         super()._mesh()
 
 
-class Circle(Polygon):
+class Isogon(Polygon):
     """
-    A circle geometry approximation with parts lines.
+    An Isogon (regular polygon) geometry.
     """
 
-    # todo: better name for parts
-    def __init__(self, mapdl, radius, parts,
-                 rotation_angle=0, destination=Point2D(0, 0)):
-        self._r = radius
-        self._parts = parts
+    def __init__(self, mapdl: Mapdl, circumradius: float, edges: int,
+                 rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
+        self._r = circumradius
+        self._parts = edges
         self._calc_raw_points()
         super().__init__(mapdl, self._raw_points, rotation_angle, destination)
 
-    def _calc_raw_points(self):
+    def _calc_raw_points(self) -> None:
         self._raw_points = []
         # x = -self._r
         # y = 0
@@ -499,8 +510,8 @@ class Circle(Polygon):
 
 
 class FilmWithROI(Geometry2d):
-    def __init__(self, mapdl, radius, height, roi_width, roi_height,
-                 rotation_angle=0, destination=Point2D(0, 0)):
+    def __init__(self, mapdl: Mapdl, radius: float, height: float, roi_width: float, roi_height: float,
+                 rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
         super().__init__(mapdl, rotation_angle, destination)
         self._r = radius
         self._h = height
@@ -512,7 +523,7 @@ class FilmWithROI(Geometry2d):
         self.film_line_left = None
         self.film_line_right = None
         self.film_line_top = None
-        self.film_line_buttom = None
+        self.film_line_bottom = None
         self.film_line_roi_horizontal = None
         self.film_line_roi_vertical = None
         self.roi_lines = []
@@ -524,7 +535,7 @@ class FilmWithROI(Geometry2d):
         self.roi_area = None
         super()._calc_points()
 
-    def _calc_raw_points(self):
+    def _calc_raw_points(self) -> None:
         self._raw_points.clear()
         self._raw_points.append(Point2D(0, 0))
 
@@ -543,7 +554,7 @@ class FilmWithROI(Geometry2d):
         #  for missing keypoint of roi:
         self._raw_points.append(Point2D(0, self._h))
 
-    def _create_lines(self):
+    def _create_lines(self) -> None:
         self._create_film_lines()
         self._create_roi_lines()
         self.lines.extend(self.film_lines)
@@ -565,7 +576,7 @@ class FilmWithROI(Geometry2d):
         self.film_line_bottom = self._mapdl.l(k[5], k[0])
         self.film_lines.append(self.film_line_bottom)
 
-    def _create_roi_lines(self):
+    def _create_roi_lines(self) -> None:
         k = self.keypoints
 
         self.roi_line_left = self._mapdl.l(k[1], k[6])
@@ -578,7 +589,7 @@ class FilmWithROI(Geometry2d):
         self.roi_lines.append(self.roi_line_right)
         self.roi_lines.append(self.roi_line_bottom)
 
-    def create(self):
+    def create(self) -> None:
         self._mapdl.prep7()
         self._create_keypoints()
         self._create_lines()
@@ -587,21 +598,13 @@ class FilmWithROI(Geometry2d):
         self.areas.append(self.film_area)
         self.areas.append(self.roi_area)
 
-    def create_merged_to(self, geometry2d):
+    def create_merged_to(self, geometry2d: Type[Geometry2d]) -> None:
         """
         Use this to merge this geometry to another. Don't use lglue/aglue!
         That would also change keypoint numbers, line numbers and area numbers
         inside ANSYS.
 
-        Parameters
-        ----------
-        geometry2d : Geometry2d
-            Geometry to which the new area will merge (sharing keypoints).
-
-        Returns
-        -------
-        None.
-
+        :param geometry2d: Geometry to which the new area will merge (sharing keypoints).
         """
         self._mapdl.prep7()
         self._create_keypoints_merged(geometry2d)
@@ -611,7 +614,7 @@ class FilmWithROI(Geometry2d):
         self.areas.append(self.film_area)
         self.areas.append(self.roi_area)
 
-    def mesh(self, nir):
+    def mesh(self, nir: int) -> None:
         n_roi_height = nir
         n_roi_width = 3 * nir
 
@@ -638,8 +641,8 @@ class Tip(Geometry2d):
     The shape is defined via coeff. of an area-function (polynom-fit).
     """
 
-    def __init__(self, mapdl, shape_coefficients,
-                 rotation_angle=0, destination=Point2D(0, 0)):
+    def __init__(self, mapdl: Mapdl, shape_coefficients: List[float],
+                 rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)):
         """
         Initilize Tip-Instance and calculate points.
             Parameters
@@ -669,7 +672,7 @@ class Tip(Geometry2d):
         self._calc_raw_points()
         super()._calc_points()
 
-    def _calc_raw_points(self):
+    def _calc_raw_points(self) -> None:
         self._raw_points.clear()
 
         self._raw_points.append(Point2D(0, 0))
@@ -680,7 +683,7 @@ class Tip(Geometry2d):
             y = 1000 * pow(i / self._n_splines, 2)
             self._raw_points.append(Point2D(self._calc_tip_radius(y), y))
 
-    def _create_lines(self):
+    def _create_lines(self) -> None:
         k = self.keypoints
 
         self.line_left = self._mapdl.l(k[0], k[1])
@@ -694,7 +697,7 @@ class Tip(Geometry2d):
         for i in range(3, len(k) - 1, 5):
             keypoints = [k[i], k[i + 1], k[i + 2], k[i + 3], k[i + 4], k[i + 5]]
             self.lines.append(self._mapdl.bsplin(*keypoints))
-        keypoints = [k[i + 5], k[0], "", "", "", ""]
+        keypoints = [k[-1], k[0], "", "", "", ""]
         self.lines.append(self._mapdl.bsplin(*keypoints, "", "", "", -1))
         self.lines_contact = (self.lines[3:len(self.lines)])
 
