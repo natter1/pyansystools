@@ -6,6 +6,7 @@ Created on Tue Sep 10 15:03:12 2019
 """
 import pytest
 import pyansystools.geo2d as geo2d
+
 # from pyansystools.testcases import Data, TestCase
 
 flag_create_plots = True
@@ -26,6 +27,12 @@ def do_plot(ansys):
         plot(ansys)
 
 
+# @pytest.fixture(scope='class')
+# def point(ansys):
+#     point = geo2d.Point(1, 2, 3)
+#     yield point
+
+
 @pytest.fixture(scope='class')
 def circle(ansys, do_plot):
     circle = geo2d.Isogon(ansys, 1, 80)
@@ -38,7 +45,7 @@ def film_with_roi(ansys, do_plot):
     film_with_roi = geo2d.FilmWithROI(ansys, film_width, film_height,
                                       roi_width, roi_height, rotation_angle)
     film_with_roi.create()
-#    film_with_roi.mesh(11)
+    #    film_with_roi.mesh(11)
     yield film_with_roi
 
 
@@ -56,6 +63,53 @@ def plot(ansys):
     ansys.pnum("LINE", 1)
     ansys.pnum("AREA", 1)
     ansys.gplot()
+
+
+class TestPoint:
+    def test_iterate(self):
+        point = geo2d.Point(1, 2, 3)
+        x, y, z = point
+        assert (x, y, z) == (1, 2, 3)
+
+    def test_equal(self):
+        point = geo2d.Point(1, 2, 3)
+        assert point == geo2d.Point(1, 2, 3)
+        assert point != geo2d.Point(1, 2, 4)
+        assert NotImplemented == point.__eq__((1, 2, 3))
+
+    def test_shift_by(self):
+        point = geo2d.Point(1, 2, 3)
+        point.shift_by((-1, -2, -3))
+        assert point == geo2d.Point(0, 0, 0)
+        point.shift_by(geo2d.Point(0, 0, 1))
+        assert point.z == 1
+
+    def test_get_list(self):
+        point = geo2d.Point(1, 2, 3)
+        my_list = point.get_list()
+        assert my_list == [1, 2, 3]
+
+
+class TestGeometry2D:
+    def test_abstract_class(self, mapdl):
+        with pytest.raises(TypeError):  # abstract class
+            geometry = geo2d.Geometry2d(mapdl)
+
+    def test_set_element_type(self, mapdl):
+        geometry = geo2d.Rectangle(mapdl, 2, 2)
+        geometry.create()
+        geometry.set_element_type(mapdl.et("", "PLANE183"))
+        geometry.mesh_custom(2, 2, 2, 2)  # meshing causes exception, if no et set
+        assert True
+
+
+class TestRectangle:
+    def test_mesh_custom(self, mapdl):
+        rectangle = geo2d.Rectangle(mapdl, 2, 2)
+        rectangle.create()
+        mapdl.et("", "PLANE183")
+        rectangle.mesh_custom(2,2,2,2)
+        assert True
 
 
 class TestCircle:

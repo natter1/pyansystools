@@ -15,7 +15,7 @@ Classes:
 import copy
 import math
 from abc import ABC, abstractmethod
-from typing import Union, Type, List
+from typing import Union, Type, List, Tuple
 
 from pyansys import Mapdl
 
@@ -35,10 +35,11 @@ class Point:
             return self.get_list() == other.get_list()
         return NotImplemented
 
-    def shift_by(self, point: "Point"):
-        self.x += point.x
-        self.y += point.y
-        self.z += point.z
+    def shift_by(self, point: Union["Point", Tuple[float, float, float]]) -> None:
+        x, y, z = point
+        self.x += x
+        self.y += y
+        self.z += z
 
     def get_list(self):
         return [self.x, self.y, self.z]
@@ -103,13 +104,13 @@ class Geometry2d(ABC):
         self.areas = []  # ansys area numbers
         self.component_name = ''
 
-    def set_element_type(self, et: Union[str, int]) -> None:
+    def set_element_type(self, et: int) -> None:
         """
         This function sets the element type for all areas belonging to the geometry-instance using APDL AATT.
         Call this function after calling create() to make sure the areas exist, or call create() before
         changing element type somewhere else e.g. by calling APDL AATT or TYPE.
 
-        :param et: Element type, e.g. 183 or 'plane183'
+        :param et: Element type number (createt via mapdl.et(...)
         """
         self.select_areas()
         self._mapdl.aatt("", "", et)

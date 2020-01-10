@@ -118,7 +118,7 @@ This class is meant to be subclassed for each specific geometry (like Rectangle)
     geometry.select_areas()  # Selects all areas belonging to the geometry (deselecting all other areas).
 
     geometry.set_material_number(mat=3)
-    geometry.set_element_type(183)
+    geometry.set_element_type(mapdl.et("", 183))
 
 All subclasses have to implement at least:
     * __init__()
