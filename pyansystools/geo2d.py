@@ -117,7 +117,7 @@ class Geometry2d(ABC):
 
     def set_material_number(self, mat: Union[str, int]) -> None:
         """
-        This function sets the element type for all areas belonging to the geometry-instance using APDL AATT.
+        This function sets the material number for all areas belonging to the geometry-instance using APDL AATT.
         Call this function after calling create() to make sure the areas exist.
 
         :param mat:
@@ -616,23 +616,28 @@ class FilmWithROI(Geometry2d):
         self.areas.append(self.roi_area)
 
     def mesh(self, nir: int) -> None:
-        n_roi_height = nir
-        n_roi_width = 3 * nir
+        n_roi_height = 2 * nir
+        n_roi_width = 6 * nir
 
         self._mapdl.prep7()
         super().select_lines()
         # ROI - indent region
         self._mapdl.lesize(self.roi_line_left, "", "", n_roi_height, 0, "", "", "", 1)
         self._mapdl.lesize(self.roi_line_right, "", "", n_roi_height, 0, "", "", "", 1)
-
-        self._mapdl.lesize(self.roi_line_top, "", "", n_roi_width, -0.25, "", "", "", 1)
-        self._mapdl.lesize(self.roi_line_bottom, "", "", n_roi_width, -0.25, "", "", "", 1)
+        # self._mapdl.lesize(self.roi_line_top, "", "", n_roi_width, -0.25, "", "", "", 1)
+        # self._mapdl.lesize(self.roi_line_bottom, "", "", n_roi_width, -0.25, "", "", "", 1)
+        self._mapdl.lesize(self.roi_line_top, "", "", n_roi_width, "", "", "", "", 1)
+        self._mapdl.lesize(self.roi_line_bottom, "", "", n_roi_width, "", "", "", "", 1)
 
         # outer region
         self._mapdl.lesize(self.film_line_left, "", "", 14, 0.1, "", "", "", 1)
         self._mapdl.lesize(self.film_line_top, "", "", 19, 25, "", "", "", 1)
         self._mapdl.lesize(self.film_line_right, "", "", 15, "", "", "", "", 1)
-        self._mapdl.lesize(self.film_line_bottom, "", "", 20, 10, "", "", "", 1)
+        # if not merged to substrate
+        if self.film_line_right == (self.film_line_bottom-1):
+            self._mapdl.lesize(self.film_line_bottom, "", "", 20, 0.10, "", "", "", 1)
+        else:  # merged to substrate (line direction reversed)
+            self._mapdl.lesize(self.film_line_bottom, "", "", 20, 10, "", "", "", 1)
         super()._mesh()
 
 

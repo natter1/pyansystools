@@ -7,7 +7,6 @@ Created on Tue Sep 10 15:03:12 2019
 import pytest
 import pyansystools.geo2d as geo2d
 
-# from pyansystools.testcases import Data, TestCase
 
 flag_create_plots = True
 
@@ -25,12 +24,6 @@ def do_plot(ansys):
     yield
     if flag_create_plots:
         plot(ansys)
-
-
-# @pytest.fixture(scope='class')
-# def point(ansys):
-#     point = geo2d.Point(1, 2, 3)
-#     yield point
 
 
 @pytest.fixture(scope='class')

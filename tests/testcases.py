@@ -10,6 +10,7 @@ class TestCase(Enum):
     """
     Enumeration for selection test cases.
     """
+    __test__=False
     ZERO = auto()
     TOOLARGE = auto()
     UNSELECTED = auto()
