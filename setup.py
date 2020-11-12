@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='pyansystools',
-    version='0.0.2',
+    version='0.0.3',
     packages=['tests', 'pyansystools'],
     url='https://github.com/natter1/pyansystools',
     license='MIT',
