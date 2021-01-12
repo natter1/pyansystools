@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='pyansystools',
-    version='0.0.3',
+    version='0.0.4a',
     packages=['tests', 'pyansystools'],
     url='https://github.com/natter1/pyansystools',
     license='MIT',
@@ -13,7 +13,7 @@ setup(
     install_requires=[
         "pyansys",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.7',
     classifiers=[
         # How mature is this project? Common values are
         #   3 - Alpha
