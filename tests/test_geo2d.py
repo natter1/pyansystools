@@ -110,13 +110,13 @@ class TestCircle:
         assert len(circle.lines) == 80
 
     def test_lines_ansys(self, mapdl):
-        assert mapdl.get_float("LINE", 0, "COUNT") == 80
+        assert mapdl.get_value("LINE", 0, "COUNT") == 80
 
     def test_areas(self, mapdl, circle):
         assert len(circle.areas) == 1
 
     def test_areas_ansys(self, mapdl):
-        assert mapdl.get_float("AREA", 0, "COUNT") == 1
+        assert mapdl.get_value("AREA", 0, "COUNT") == 1
 
     def test_mesh(self, mapdl, circle):
         mapdl.et("", "PLANE183")
@@ -130,13 +130,13 @@ class TestFilmWithRoi:
         assert len(film_with_roi.lines) == 8
 
     def test_lines_ansys(self, mapdl):
-        assert mapdl.get_float("LINE", 0, "COUNT") == 8
+        assert mapdl.get_value("LINE", 0, "COUNT") == 8
 
     def test_areas(self, mapdl, film_with_roi):
         assert len(film_with_roi.areas) == 2
 
     def test_areas_ansys(self, mapdl):
-        assert mapdl.get_float("AREA", 0, "COUNT") == 2
+        assert mapdl.get_value("AREA", 0, "COUNT") == 2
 
     def test_mesh(self, mapdl, film_with_roi):
         mapdl.et("", "PLANE183")
@@ -150,13 +150,13 @@ class TestTip:
         assert len(tip.lines) == 8
 
     def test_lines_ansys(self, mapdl):
-        assert mapdl.get_float("LINE", 0, "COUNT") == 6
+        assert mapdl.get_value("LINE", 0, "COUNT") == 6
 
     def test_areas(self, mapdl, tip):
         assert len(tip.areas) == 1
 
     def test_areas_ansys(self, mapdl):
-        assert mapdl.get_float("AREA", 0, "COUNT") == 1
+        assert mapdl.get_value("AREA", 0, "COUNT") == 1
 
     def test_mesh(self, mapdl, tip):
         mapdl.et("", "PLANE183")

@@ -69,8 +69,8 @@ def setup_data(ansys):
     e.append(ansys.e(1, 2, 3, 4))
     e.append(ansys.e(1, 2, 3, 5))
 
-    l.append(ansys.get_float('LINE', 0, 'NUM', 'MAXD'))
-    a.append(ansys.get_float('AREA', 0, 'NUM', 'MAXD'))
+    l.append(ansys.get_value('LINE', 0, 'NUM', 'MAXD'))
+    a.append(ansys.get_value('AREA', 0, 'NUM', 'MAXD'))
     yield {'k': k, 'l': l, 'a': a, 'v': v, 'k': n, 'e': e}
     ansys.clear()
 

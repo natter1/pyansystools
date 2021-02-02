@@ -17,8 +17,8 @@ import math
 from abc import ABC, abstractmethod
 from typing import Union, Type, List, Tuple
 
-from pyansys import Mapdl
 
+from ansys.mapdl.core import launch_mapdl
 
 class Point:
     """
@@ -82,7 +82,7 @@ class Geometry2d(ABC):
     meant to be subclassed for each specific geometry (like Square).
     """
 
-    def __init__(self, mapdl: Mapdl, rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)):
+    def __init__(self, mapdl, rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)):
         """
         Should be called inside subclasses __init__.
 
@@ -276,7 +276,7 @@ class Polygon(Geometry2d):
     There can be exceptions to this, for example when creating a circle.
     """
 
-    def __init__(self, mapdl: Mapdl, raw_points: list,
+    def __init__(self, mapdl, raw_points: list,
                  rotation_angle: float = 0, destination: "Point2D" = Point2D(0, 0)) -> None:
         super().__init__(mapdl, rotation_angle, destination)
         self._raw_points = []
@@ -340,7 +340,7 @@ class Rectangle(Polygon):
     A rectangle geometry with 4 keypoints, 4 lines and one area.
     """
 
-    def __init__(self, mapdl: Mapdl, width: float, height: float,
+    def __init__(self, mapdl, width: float, height: float,
                  rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
         self._b = width
         self._h = height
@@ -382,7 +382,7 @@ class Isogon(Polygon):
     An Isogon (regular polygon) geometry.
     """
 
-    def __init__(self, mapdl: Mapdl, circumradius: float, edges: int,
+    def __init__(self, mapdl, circumradius: float, edges: int,
                  rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
         self._r = circumradius
         self._parts = edges
@@ -511,7 +511,133 @@ class Isogon(Polygon):
 
 
 class FilmWithROI(Geometry2d):
-    def __init__(self, mapdl: Mapdl, radius: float, height: float, roi_width: float, roi_height: float,
+    def __init__(self, mapdl, radius: float, height: float, roi_width: float, roi_height: float,
+                 rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
+        super().__init__(mapdl, rotation_angle, destination)
+        self._r = radius
+        self._h = height
+        self._roi_width = roi_width
+        self._roi_height = roi_height
+        self._calc_raw_points()
+        self._aspect_ratio = round(radius / height)
+
+        self.film_lines = []
+        self.film_line_left = None
+        self.film_line_right = None
+        self.film_line_top = None
+        self.film_line_bottom = None
+        # self.film_line_roi_horizontal = None
+        # self.film_line_roi_vertical = None
+        # self.roi_lines = []
+        self.roi_line_left = None
+        # self.roi_line_right = None
+        self.roi_line_top = None
+        # self.roi_line_bottom = None
+        self.film_area = None
+        # self.roi_area = None
+        super()._calc_points()
+
+    def _calc_raw_points(self) -> None:
+        self._raw_points.clear()
+        self._raw_points.append(Point2D(0, 0))
+
+        self._raw_points.append(Point2D(0, self._h))
+        self._raw_points.append(Point2D(self._r, self._h))
+        self._raw_points.append(Point2D(self._r, 0))
+
+
+    def _create_lines(self) -> None:
+        self._create_film_lines()
+        # self._create_roi_lines()
+        self.lines.extend(self.film_lines)
+        # self.lines.extend(self.roi_lines[:2])
+
+    def _create_film_lines(self):
+        k = self.keypoints
+
+        self.film_line_left = self._mapdl.l(k[0], k[1])
+        self.film_lines.append(self.film_line_left)
+        # self.film_line_roi_horizontal = self._mapdl.l(k[1], k[2])
+        # self.film_lines.append(self.film_line_roi_horizontal)
+        # self.film_line_roi_vertical = self._mapdl.l(k[2], k[3])
+        # self.film_lines.append(self.film_line_roi_vertical)
+        self.film_line_top = self._mapdl.l(k[1], k[2])
+        self.film_lines.append(self.film_line_top)
+        self.film_line_right = self._mapdl.l(k[2], k[3])
+        self.film_lines.append(self.film_line_right)
+        self.film_line_bottom = self._mapdl.l(k[3], k[0])
+        self.film_lines.append(self.film_line_bottom)
+
+        self.roi_line_top = self.film_line_top
+        self.roi_line_left = self.film_line_left
+
+    # def _create_roi_lines(self) -> None:
+    #     k = self.keypoints
+    #
+    #     self.roi_line_left = self._mapdl.l(k[1], k[6])
+    #     self.roi_line_right = self.film_line_roi_vertical
+    #     self.roi_line_top = self._mapdl.l(k[6], k[3])
+    #     self.roi_line_bottom = self.film_line_roi_horizontal
+    #
+    #     self.roi_lines.append(self.roi_line_left)
+    #     self.roi_lines.append(self.roi_line_top)
+    #     self.roi_lines.append(self.roi_line_right)
+    #     self.roi_lines.append(self.roi_line_bottom)
+
+    def create(self) -> None:
+        self._mapdl.prep7()
+        self._create_keypoints()
+        self._create_lines()
+        self.film_area = self._mapdl.al(*self.film_lines)
+        # self.roi_area = self._mapdl.al(*self.roi_lines)
+        self.areas.append(self.film_area)
+        # self.areas.append(self.roi_area)
+
+    def create_merged_to(self, geometry2d: Type[Geometry2d]) -> None:
+        """
+        Use this to merge this geometry to another. Don't use lglue/aglue!
+        That would also change keypoint numbers, line numbers and area numbers
+        inside ANSYS.
+
+        :param geometry2d: Geometry to which the new area will merge (sharing keypoints).
+        """
+        self._mapdl.prep7()
+        self._create_keypoints_merged(geometry2d)
+        self._create_lines()
+        self.film_area = self._mapdl.al(*self.film_lines)
+        # self.roi_area = self._mapdl.al(*self.roi_lines)
+        self.areas.append(self.film_area)
+        # self.areas.append(self.roi_area)
+
+    def mesh(self, nir: int) -> None:
+        n_roi_height = nir
+        n_roi_width = max(1, self._aspect_ratio * n_roi_height) # 6 * nir
+
+        self._mapdl.prep7()
+        self._mapdl.mshkey(2)
+        super().select_lines()
+        # # ROI - indent region
+        # self._mapdl.lesize(self.roi_line_left, "", "", n_roi_height, 0, "", "", "", 1)
+        # self._mapdl.lesize(self.roi_line_right, "", "", n_roi_height, 0, "", "", "", 1)
+        # # self._mapdl.lesize(self.roi_line_top, "", "", n_roi_width, -0.25, "", "", "", 1)
+        # # self._mapdl.lesize(self.roi_line_bottom, "", "", n_roi_width, -0.25, "", "", "", 1)
+        # self._mapdl.lesize(self.roi_line_top, "", "", n_roi_width, "", "", "", "", 1)
+        # self._mapdl.lesize(self.roi_line_bottom, "", "", n_roi_width, "", "", "", "", 1)
+
+        # outer region
+        self._mapdl.lesize(self.film_line_left, "", "", n_roi_height, 0, "", "", "", 1)
+        self._mapdl.lesize(self.film_line_top, "", "", n_roi_width, 0, "", "", "", 1)
+        self._mapdl.lesize(self.film_line_right, "", "", n_roi_height, "", "", "", "", 1)
+        # if not merged to substrate
+        if self.film_line_right == (self.film_line_bottom-1):
+            self._mapdl.lesize(self.film_line_bottom, "", "", n_roi_width, 0, "", "", "", 1)
+        else:  # merged to substrate (line direction reversed)
+            self._mapdl.lesize(self.film_line_bottom, "", "", 20, 10, "", "", "", 1)
+        super()._mesh()
+
+
+class _FilmWithROI(Geometry2d):
+    def __init__(self, mapdl, radius: float, height: float, roi_width: float, roi_height: float,
                  rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
         super().__init__(mapdl, rotation_angle, destination)
         self._r = radius
@@ -647,7 +773,126 @@ class Tip(Geometry2d):
     The shape is defined via coeff. of an area-function (polynom-fit).
     """
 
-    def __init__(self, mapdl: Mapdl, shape_coefficients: List[float],
+    def __init__(self, mapdl, shape_coefficients: List[float],
+                 rotation_angle: float = 0, destination: Point2D = Point2D(0, 0), radius=30):
+        """
+        Initilize Tip-Instance and calculate points.
+            Parameters
+            ----------
+            mapdl : Mapdl
+                Pyansys Mapdl object to control ANSYS.
+            shape_coefficients : list of floats
+                Contains the polynom coefficients, that describe the tip shape
+                via an area function (common in nanoindentation)
+            rotation_angle : float (optional)
+                Angle about which the geometry should be rotated inside ANSYS.
+                Rotation is done with axis in z through Geometry._destination.
+                Default value = 0
+            destination : Point2D
+                Position inside ANSYS, where geometry should be created.
+        """
+        super().__init__(mapdl, rotation_angle, destination)
+        # todo: add parameter for area fit function
+        self._shape_coefficients = shape_coefficients
+        self._n_splines = 20
+        self._radius = radius
+        # make sure, _n_splines is of form 5*k+1 !
+        self._n_splines = (self._n_splines // 5) * 5 + 1
+        self.line_left = None
+        self.line_top = None
+        self.line_right = None
+        self.lines_contact = []
+        self._calc_raw_points()
+        super()._calc_points()
+
+    def _calc_raw_points(self) -> None:
+        self._raw_points.clear()
+
+        self._raw_points.append(Point2D(0, 0))
+        self._raw_points.append(Point2D(0, self._radius))
+        self._raw_points.append(Point2D(self._calc_tip_radius(self._radius), self._radius))
+
+        for i in reversed(range(1, self._n_splines + 1)):
+            y = i  # radius * pow(i / self._n_splines, 2)
+            self._raw_points.append(Point2D(self._calc_tip_radius(y), y))
+
+    def _create_lines(self) -> None:
+        k = self.keypoints
+
+        self.line_left = self._mapdl.l(k[0], k[1])
+        self.line_top = self._mapdl.l(k[1], k[2])
+        self.line_right = self._mapdl.l(k[2], k[3])
+
+        self.lines.append(self.line_left)
+        self.lines.append(self.line_top)
+        self.lines.append(self.line_right)
+
+        for i in range(3, len(k) - 1, 5):
+            keypoints = [k[i], k[i + 1], k[i + 2], k[i + 3], k[i + 4], k[i + 5]]
+            self.lines.append(self._mapdl.bsplin(*keypoints))
+        keypoints = [k[-1], k[0], "", "", "", ""]
+        self.lines.append(self._mapdl.bsplin(*keypoints, "", "", "", -1))
+        self.lines_contact = (self.lines[3:len(self.lines)])
+
+    def select_spline_lines(self):
+        """
+        Selects all lines belonging to the spline shape.
+        """
+        self._mapdl.lsel("none")
+        for line_number in self.lines_contact:
+            self._mapdl.lsel("A", "LINE", "", line_number)
+
+    # =============================================================================
+    #         self._mapdl.lsel("S", "LINE", "", self.lines[3],
+    #                  self.lines[len(self.lines)-1])
+    # =============================================================================
+
+    def create(self):
+        self._mapdl.prep7()
+        super()._create_keypoints()
+        self._create_lines()
+        self.select_lines()
+        self.areas.append(self._mapdl.al("ALL"))
+
+        self.select_spline_lines()
+
+        # concatenate splines in preparation for mapped meshing
+        # (needed to be done after creating area ?)
+        self._mapdl.lccat("ALL")
+
+    def mesh(self):
+        self._mapdl.prep7()
+        super().select_lines()
+        self._mapdl.lesize(self.lines[0], "", "", 7, 4)  # , 11 ,7
+        self._mapdl.lesize(self.lines[1], "", "", 25, "")  # 85 (,)
+        self._mapdl.lesize(self.lines[2], "", "", 3)
+        super()._mesh()
+
+    # todo: better function name!
+    def _calc_tip_radius(self, i):
+        """
+        calc radius of tip-area for a given indentation depth
+        (using area function from experiment
+        and y=mx**0.5 fit for very small indents)
+        parameter:
+            i: indentation depth
+        """
+
+        assert i >= 0, "Indentation depth must be >=0 for calc_tip_radius"
+        r = self._radius
+        # use simple fit with y=mx**2
+        x = (r*r - (r-i)**2)**0.5
+
+        return x
+
+
+class _Tip(Geometry2d):
+    """
+    Half of a sharp tip as used for nanoindentation (axisymmetric model).
+    The shape is defined via coeff. of an area-function (polynom-fit).
+    """
+
+    def __init__(self, mapdl, shape_coefficients: List[float],
                  rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)):
         """
         Initilize Tip-Instance and calculate points.

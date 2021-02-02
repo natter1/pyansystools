@@ -22,8 +22,8 @@ class Status(IntEnum):
 
 
 class Inline:
-    def __init__(self, mapdl: pyansys.Mapdl):
-        assert isinstance(mapdl, pyansys.Mapdl)
+    def __init__(self, mapdl):
+        # assert isinstance(mapdl, pyansys.Mapdl)
         self._mapdl = mapdl
 
     def _read_inline(self, inline_function: str):

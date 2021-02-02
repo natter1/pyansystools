@@ -8,40 +8,42 @@ Collection of Macro-like functions for APDL ANSYS via pyansys.
 import numbers
 from typing import Union
 
-from pyansys import Mapdl
+# from pyansys import Mapdl
+from ansys.mapdl.core import launch_mapdl
 
 
 class RealConstants172:  # element 172
     def __init__(self):
-        self.r1 = ""      # 1:target circle radius
-        self.r2 = ""      # 2:superelement thickness
-        self.fkn = ""     # 3: normal penalty stiffness factor
-        self.ftoln = ""   # 4: penetration tolerance factor
-        self.icont = ""   # 5:
-        self.pinb = ""    # 6:
-        self.pzer = ""    # 7:
-        self.czer = ""    # 8:
+        self.r1 = ""  # 1:target circle radius
+        self.r2 = ""  # 2:superelement thickness
+        self.fkn = ""  # 3: normal penalty stiffness factor
+        self.ftoln = ""  # 4: penetration tolerance factor
+        self.icont = ""  # 5:
+        self.pinb = ""  # 6:
+        self.pzer = ""  # 7:
+        self.czer = ""  # 8:
         self.taumax = ""  # 9:
-        self.cnof = ""    # 10:
-        self.fkop = ""    # 11:
-        self.fkt = ""     # 12:
-        self.cohe = ""    # 13:
-        self.tcc = ""     # 14:
-        self.fhtg = ""    # 15:
-        self.sbct = ""    # 15:
-        self.rdvf = ""    # 17:
-        self.fwgt = ""    # 18:
+        self.cnof = ""  # 10:
+        self.fkop = ""  # 11:
+        self.fkt = ""  # 12:
+        self.cohe = ""  # 13:
+        self.tcc = ""  # 14:
+        self.fhtg = ""  # 15:
+        self.sbct = ""  # 15:
+        self.rdvf = ""  # 17:
+        self.fwgt = ""  # 18:
         # todo: add  mising real constants
 
-    def call_r(self, mapdl: Mapdl, set):
+    def call_r(self, mapdl, set):
         mapdl.r(set, self.r1, self.r2, self.fkn, self.ftoln, self.icont, self.pinb)
         mapdl.rmore(self.pzer, self.czer, self.taumax, self.cnof, self.fkop, self.fkt)
-        mapdl.rmore(self.cohe, self.tcc, self.fhtg, self.sbct, self.rdvf, self.)
-
+        mapdl.rmore(self.cohe, self.tcc, self.fhtg, self.sbct, self.rdvf, self.fwgt)
 
         # todo: self -> cls ?
+
+
 class Macros:
-    def __init__(self, mapdl: Mapdl):
+    def __init__(self, mapdl):
         self._mapdl = mapdl
 
     def select_lines(self, lines: Union[int, list]):
@@ -62,7 +64,7 @@ class Macros:
     def create_contact_pair_for_lines_asymmetric(self, target_lines: Union[int, list],
                                                  contact_lines: Union[int, list],
                                                  n_target169: int = None,
-                                                 n_conta172: int =None,
+                                                 n_conta172: int = None,
                                                  constants172: RealConstants172 = None):
         """
         Create asymmetric contact pair between given line_numbers.
@@ -97,7 +99,7 @@ class Macros:
             self._mapdl.keyopt(n_conta172, 10, 2)
 
         # Each contact pairs must be defined by a different real constant set
-        next_real = self._mapdl.get_float("RCON", 0, "NUM", "MAX") + 1
+        next_real = self._mapdl.get_value("RCON", 0, "NUM", "MAX") + 1
         # Target and contact elements that make up a contact pair
         # are associated with each other via a shared real constant set
         self._mapdl.real(next_real)
@@ -105,7 +107,7 @@ class Macros:
         # self._mapdl.r(next_real, "", "", 20.0)
         self._mapdl.r(next_real, "", "", "", -1)  # FTOLN = -1 (negative value sets it absolute)
 
-        if constants172:
+        if constants172:  # overwrites previews values like ftoln
             constants172.call_r(self._mapdl, next_real)
 
         # Generate the target surface
@@ -141,7 +143,8 @@ class Macros:
         Make sure to create nodes for those lines before calling this.
         """
         # Create Contact Pair:
-        n_target169, n_conta172 = self.create_contact_pair_for_lines_asymmetric(lines_a, lines_b, n_target169, n_conta172, constants172)
+        n_target169, n_conta172 = self.create_contact_pair_for_lines_asymmetric(lines_a, lines_b, n_target169,
+                                                                                n_conta172, constants172)
         # Create Companion Pair:
         self.create_contact_pair_for_lines_asymmetric(lines_b, lines_a, n_target169, n_conta172, constants172)
         # self.Edcontact(0.2)
