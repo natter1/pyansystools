@@ -7,8 +7,6 @@ Creates/overwrites ANSYS-Paramter `__inline__'!
 import re
 from enum import IntEnum
 
-import pyansys
-
 from pyansystools.geo2d import Point as Point
 
 

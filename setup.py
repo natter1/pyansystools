@@ -11,7 +11,6 @@ setup(
     description='Provides classes to simplify the work with ANSYS using the python module pyansys.',
     long_description='Provides classes to simplify the work with ANSYS using the python module pyansys.',
     install_requires=[
-        "pyansys",
     ],
     python_requires='>=3.7',
     classifiers=[
@@ -19,7 +18,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Alpha',
 
         # Pick your license as you wish (should match "license" above)
          'License :: OSI Approved :: MIT License',
@@ -28,6 +27,7 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     # package_data={
     #     #'examples': ['...'],

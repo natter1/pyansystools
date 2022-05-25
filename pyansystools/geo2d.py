@@ -261,8 +261,9 @@ class Geometry2d(ABC):
             Absolute tolerance when comparing float values for x and y.
             Defaults to 1e-6
         """
-        x = self._mapdl.get_float("KP", keypoint_number, "LOC", "X")
-        y = self._mapdl.get_float("KP", keypoint_number, "LOC", "Y")
+        q = self._mapdl.queries
+        x = q.kx(keypoint_number)
+        y = q.ky(keypoint_number)
         return (math.isclose(x, point.x, abs_tol=tol)
                 and math.isclose(y, point.y, abs_tol=tol))
 
