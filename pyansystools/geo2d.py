@@ -511,7 +511,7 @@ class Isogon(Polygon):
 #         super()._mesh()
 
 
-class FilmWithROI(Geometry2d):
+class _FilmWithROI(Geometry2d):
     def __init__(self, mapdl, radius: float, height: float, roi_width: float, roi_height: float,
                  rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
         super().__init__(mapdl, rotation_angle, destination)
@@ -637,7 +637,7 @@ class FilmWithROI(Geometry2d):
         super()._mesh()
 
 
-class _FilmWithROI(Geometry2d):
+class FilmWithROI(Geometry2d):
     def __init__(self, mapdl, radius: float, height: float, roi_width: float, roi_height: float,
                  rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
         super().__init__(mapdl, rotation_angle, destination)
@@ -768,7 +768,7 @@ class _FilmWithROI(Geometry2d):
         super()._mesh()
 
 
-class Tip(Geometry2d):
+class _Tip(Geometry2d):
     """
     Half of a sharp tip as used for nanoindentation (axisymmetric model).
     The shape is defined via coeff. of an area-function (polynom-fit).
@@ -887,7 +887,7 @@ class Tip(Geometry2d):
         return x
 
 
-class _Tip(Geometry2d):
+class Tip(Geometry2d):
     """
     Half of a sharp tip as used for nanoindentation (axisymmetric model).
     The shape is defined via coeff. of an area-function (polynom-fit).
