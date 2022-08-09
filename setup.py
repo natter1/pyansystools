@@ -2,17 +2,17 @@ from setuptools import setup
 
 setup(
     name='pyansystools',
-    version='0.0.4a',
+    version='0.0.5',
     packages=['tests', 'pyansystools'],
     url='https://github.com/natter1/pyansystools',
     license='MIT',
     author='Nathanael Jöhrmann',
     author_email='',
-    description='Provides classes to simplify the work with ANSYS using the python module pyansys.',
-    long_description='Provides classes to simplify the work with ANSYS using the python module pyansys.',
+    description='Provides classes to simplify the work with ANSYS using the python module ansys-mapdl-core.',
+    long_description='Provides classes to simplify the work with ANSYS using the python module ansys-mapdl-core.',
     install_requires=[
     ],
-    python_requires='>=3.7',
+    python_requires='>=3.9',
     classifiers=[
         # How mature is this project? Common values are
         #   3 - Alpha
@@ -24,10 +24,8 @@ setup(
          'License :: OSI Approved :: MIT License',
 
         # Specify the Python versions you support here.
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
     # package_data={
     #     #'examples': ['...'],
