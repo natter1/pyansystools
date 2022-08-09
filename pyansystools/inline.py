@@ -1,4 +1,5 @@
 """
+Deprecated - PyMAPDL now provides a Query-object for the inline functions.
 Provides a class to directly use inline-functions in ANSYS via pyansys
 Creates/overwrites ANSYS-Paramter `__inline__'!
 @author: Nathanael Jöhrmann
@@ -6,6 +7,7 @@ Creates/overwrites ANSYS-Paramter `__inline__'!
 
 import re
 from enum import IntEnum
+from warnings import warn
 
 from pyansystools.geo2d import Point as Point
 
@@ -31,6 +33,7 @@ class Inline:
         :param inline_function: String containing the complete inline-function
         :return: float
         """
+        warn('This is deprecated, as pymapdl now provides similar functionality.', DeprecationWarning)#, stacklevel=2)
         line = self._mapdl.run(f"__inline__={inline_function}")
         return float(re.search(r"(?<=__INLINE__ =).*", line).group(0))
 
@@ -44,6 +47,7 @@ class Inline:
         :param n: node number in ANSYS
         :return: Status
         """
+#        warn('This is deprecated, as pymapdl now provides similar functionality.', DeprecationWarning)#, stacklevel=2)
         result = self._read_inline(f"nsel({n})")
         return Status(result)
 

@@ -113,159 +113,200 @@ class TestInline:
     def test_nsel(self, inline, setup_data, select_task):
         n = setup_data['k'].get_case_data(select_task[0])
         expected = select_task[1]
-        assert inline.nsel(n) == expected
+        with pytest.deprecated_call():
+            assert inline.nsel(n) == expected
 
     def test_esel(self, inline, setup_data, select_task):
         e = setup_data['e'].get_case_data(select_task[0])
         expected = select_task[1]
-        assert inline.esel(e) == expected
+        with pytest.deprecated_call():
+            assert inline.esel(e) == expected
 
     def test_ksel(self, inline, setup_data, select_task):
         k = setup_data['k'].get_case_data(select_task[0])
         expected = select_task[1]
-        assert inline.ksel(k) == expected
+        with pytest.deprecated_call():
+            assert inline.ksel(k) == expected
 
     def test_lsel(self, inline, setup_data, select_task):
         l = setup_data['l'].get_case_data(select_task[0])
         expected = select_task[1]
-        assert inline.lsel(l) == expected
+        with pytest.deprecated_call():
+            assert inline.lsel(l) == expected
 
     def test_asel(self, inline, setup_data, select_task):
         a = setup_data['a'].get_case_data(select_task[0])
         expected = select_task[1]
-        assert inline.asel(a) == expected
+        with pytest.deprecated_call():
+            assert inline.asel(a) == expected
 
     def test_vsel(self, inline, setup_data, select_task):
         v = setup_data['v'].get_case_data(select_task[0])
         expected = select_task[1]
-        assert inline.vsel(v) == expected
+        with pytest.deprecated_call():
+            assert inline.vsel(v) == expected
 
     def test_ndnext(self, inline, setup_data, next_task):
         n = setup_data['k'].get_case_data(next_task[0])
         expected = next_task[1]
-        assert inline.ndnext(n) == expected
+        with pytest.deprecated_call():
+            assert inline.ndnext(n) == expected
 
     def test_elnext(self, inline, setup_data, next_task):
         e = setup_data['e'].get_case_data(next_task[0])
         expected = next_task[1]
-        assert inline.elnext(e) == expected
+        with pytest.deprecated_call():
+            assert inline.elnext(e) == expected
 
     def test_kpnext(self, inline, setup_data, next_task):
         k = setup_data['k'].get_case_data(next_task[0])
         expected = next_task[1]
-        assert inline.kpnext(k) == expected
+        with pytest.deprecated_call():
+            assert inline.kpnext(k) == expected
 
     def test_lsnext(self, inline, setup_data, next_task):
         l = setup_data['l'].get_case_data(next_task[0])
         expected = next_task[1]
-        assert inline.lsnext(l) == expected
+        with pytest.deprecated_call():
+            assert inline.lsnext(l) == expected
 
     def test_arnext(self, inline, setup_data, next_task):
         a = setup_data['a'].get_case_data(next_task[0])
         expected = next_task[1]
-        assert inline.arnext(a) == expected
+        with pytest.deprecated_call():
+            assert inline.arnext(a) == expected
 
     def test_vlnext(self, inline, setup_data, next_task):
         v = setup_data['v'].get_case_data(next_task[0])
         expected = next_task[1]
-        assert inline.vlnext(v) == expected
+        with pytest.deprecated_call():
+            assert inline.vlnext(v) == expected
 
     def test_centrx(self, inline, setup_data):
-        assert inline.centrx(setup_data['e'].min) == 0.5
+        with pytest.deprecated_call():
+            assert inline.centrx(setup_data['e'].min) == 0.5
 
     def test_centry(self, inline, setup_data):
-        assert inline.centry(setup_data['e'].min) == 0.5
+        with pytest.deprecated_call():
+            assert inline.centry(setup_data['e'].min) == 0.5
 
     def test_centrz(self, inline, setup_data):
-        assert inline.centrz(setup_data['e'].min) == 0.25
+        with pytest.deprecated_call():
+            assert inline.centrz(setup_data['e'].min) == 0.25
 
     def test_centrxyz(self, inline, setup_data):
-        assert inline.centrxyz(setup_data['e'].min) == Point(0.5, 0.5, 0.25)
+        with pytest.deprecated_call():
+            assert inline.centrxyz(setup_data['e'].min) == Point(0.5, 0.5, 0.25)
 
     def test_nx(self, inline, setup_data):
-        assert inline.nx(setup_data['k'].max) == 0
+        with pytest.deprecated_call():
+            assert inline.nx(setup_data['k'].max) == 0
 
     def test_ny(self, inline, setup_data):
-        assert inline.ny(setup_data['k'].max) == 1
+        with pytest.deprecated_call():
+            assert inline.ny(setup_data['k'].max) == 1
 
     def test_nz(self, inline, setup_data):
-        assert inline.nz(setup_data['k'].max) == -1
+        with pytest.deprecated_call():
+            assert inline.nz(setup_data['k'].max) == -1
 
     def test_nxyz(self, inline, setup_data):
-        assert inline.nxyz(setup_data['k'].max) == Point(0, 1, -1)
+        with pytest.deprecated_call():
+            assert inline.nxyz(setup_data['k'].max) == Point(0, 1, -1)
 
     def test_kx(self, inline, setup_data):
-        assert inline.kx(setup_data['k'].max) == -1
+        with pytest.deprecated_call():
+            assert inline.kx(setup_data['k'].max) == -1
 
     def test_ky(self, inline, setup_data):
-        assert inline.ky(setup_data['k'].min) == 0
+        with pytest.deprecated_call():
+            assert inline.ky(setup_data['k'].min) == 0
 
     def test_kz(self, inline, setup_data):
-        assert inline.kz(setup_data['k'].max) == -1
+        with pytest.deprecated_call():
+            assert inline.kz(setup_data['k'].max) == -1
 
     def test_kxyz(self, inline, setup_data):
-        assert inline.kxyz(setup_data['k'].max) == Point(-1, -1, -1)
+        with pytest.deprecated_call():
+            assert inline.kxyz(setup_data['k'].max) == Point(-1, -1, -1)
 
     def test__check_lfrac(self, inline, setup_data):
         assert inline._check_lfrac(0.9)
-        # todo: check exception, if not in range (0, 1)
 
     def test__raise_if_not_line(self, inline, setup_data):
         # todo: function not implemented yet
         assert inline._raise_if_not_line(setup_data['l'].max) == None
 
     def test_lx(self, inline, setup_data):
-        assert inline.lx(setup_data['l'].min, 0.5) == 0.5
+        with pytest.deprecated_call():
+            assert inline.lx(setup_data['l'].min, 0.5) == 0.5
 
     def test_ly(self, inline, setup_data):
-        assert inline.ly(setup_data['l'].min, 0.5) == 0
+        with pytest.deprecated_call():
+            assert inline.ly(setup_data['l'].min, 0.5) == 0
 
     def test_lz(self, inline, setup_data):
-        assert inline.lz(setup_data['l'].max, 0.5) == -0.5
+        with pytest.deprecated_call():
+            assert inline.lz(setup_data['l'].max, 0.5) == -0.5
 
     def test_lxyz(self, inline, setup_data):
-        assert inline.lxyz(setup_data['l'].max, 0.5) == Point(-0.5, 0.0, -0.5)
+        with pytest.deprecated_call():
+            assert inline.lxyz(setup_data['l'].max, 0.5) == Point(-0.5, 0.0, -0.5)
 
     def test_node(self, inline, setup_data):
-        assert inline.node(1, 0, 0) == 2
+        with pytest.deprecated_call():
+            assert inline.node(1, 0, 0) == 2
 
     def test_kp(self, inline, setup_data):
-        assert inline.kp(-1, -1, -1) == 5
+        with pytest.deprecated_call():
+            assert inline.kp(-1, -1, -1) == 5
 
     def test_distnd(self, inline, setup_data):
-        assert inline.distnd(1, 2) == 1
+        with pytest.deprecated_call():
+            assert inline.distnd(1, 2) == 1
 
     def test_distkp(self, inline, setup_data):
-        assert inline.distkp(1, 2) == 1
+        with pytest.deprecated_call():
+            assert inline.distkp(1, 2) == 1
 
     def test_disten(self, inline, setup_data, select_all):
-        assert inline.disten(1, 1) == 0.75
+        with pytest.deprecated_call():
+            assert inline.disten(1, 1) == 0.75
 
     def test_anglen(self, inline, setup_data):
-        assert math.isclose(inline.anglen(1, 2, 3), math.pi/4)
+        with pytest.deprecated_call():
+            assert math.isclose(inline.anglen(1, 2, 3), math.pi/4)
 
     def test_anglek(self, inline, setup_data):
-        assert math.isclose(inline.anglek(1, 2, 3), math.pi/2)
+        with pytest.deprecated_call():
+            assert math.isclose(inline.anglek(1, 2, 3), math.pi/2)
 
     def test_nnear(self, inline, setup_data, select_one):
-        assert inline.nnear(3) == 1  # would be 2 if all nodes selected
+        with pytest.deprecated_call():
+            assert inline.nnear(3) == 1  # would be 2 if all nodes selected
 
     def test_knear(self, inline, setup_data, select_one):
-        assert inline.knear(3) == 1
+        with pytest.deprecated_call():
+            assert inline.knear(3) == 1
 
     def test_enearn(self, inline, setup_data):
-        assert inline.enearn(5) == 1
+        with pytest.deprecated_call():
+            assert inline.enearn(5) == 1
 
     def test_ux(self, inline, setup_data):
-        assert inline.ux(1) == 0  # todo: no solution was done jet
+        with pytest.deprecated_call():
+            assert inline.ux(1) == 0  # todo: no solution was done jet
 
     def test_uy(self, inline, setup_data):
-        assert inline.uy(1) == 0  # todo: no solution was done jet
+        with pytest.deprecated_call():
+            assert inline.uy(1) == 0  # todo: no solution was done jet
 
     def test_uz(self, inline, setup_data):
         inline._mapdl.set_log_level('ERROR')
-        assert inline.uz(1) == 0  # todo: no solution was done jet
+        with pytest.deprecated_call():
+            assert inline.uz(1) == 0  # todo: no solution was done jet
         inline._mapdl.set_log_level('WARN')
 
     def test_uxyz(self, inline, setup_data):
-        assert inline.uxyz(1) == Point(0, 0, 0)
+        with pytest.deprecated_call():
+            assert inline.uxyz(1) == Point(0, 0, 0)

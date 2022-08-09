@@ -18,7 +18,7 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 4 - Alpha',
+        'Development Status :: 3 - Alpha',
 
         # Pick your license as you wish (should match "license" above)
          'License :: OSI Approved :: MIT License',

@@ -10,6 +10,7 @@ This module provides classes to simplify use of python module pyansys:
 
 * Inline (easy python interface to use APDL inline functions)
 * Geometry2d and its subclasses (create 2D geometries accesible as python objects)
+* Material
 * Macros (collection of common tasks available as methods)
 * ...
 
@@ -32,6 +33,7 @@ At this point, pyansystools has three different modules:
 inline.py
 .........
 This module implements the APDL inline functions as methods of class Inline.
+As this functionality is now part of PyMAPDL, this module is deprecated.
 
 .. code:: python
 
