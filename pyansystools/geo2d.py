@@ -17,13 +17,14 @@ import math
 from abc import ABC, abstractmethod
 from typing import Union, Type, List, Tuple
 
-
 from ansys.mapdl.core import launch_mapdl
+
 
 class Point:
     """
     3D point
     """
+
     def __init__(self, x: float = 0, y: float = 0, z: float = 0):
         self.x = x
         self.y = y
@@ -53,13 +54,15 @@ class Point2D(Point):
     """
     Class representing a 2D point.
     """
+
     def __init__(self, x=0, y=0):
         super().__init__(x, y, z=0)
 
     def shift_by(self, point: "Point2D") -> None:
         self.x += point.x
         self.y += point.y
-#        super().shift_by(Point(self.x, self.y, z=0))
+
+    #        super().shift_by(Point(self.x, self.y, z=0))
 
     def get_list(self):
         return [self.x, self.y]
@@ -261,8 +264,11 @@ class Geometry2d(ABC):
             Absolute tolerance when comparing float values for x and y.
             Defaults to 1e-6
         """
+        # todo:
         q = self._mapdl.queries
+        x = self._mapdl.get("KP", keypoint_number, "LOC", "X")
         x = q.kx(keypoint_number)
+        y = self._mapdl.get("KP", keypoint_number, "LOC", "Y")
         y = q.ky(keypoint_number)
         return (math.isclose(x, point.x, abs_tol=tol)
                 and math.isclose(y, point.y, abs_tol=tol))
@@ -375,6 +381,53 @@ class Rectangle(Polygon):
         self._mapdl.lesize(self.lines[2], "", "", ndiv_height, 1 / ratio_height)
         self._mapdl.lesize(self.lines[1], "", "", ndiv_width, ratio_width)
         self._mapdl.lesize(self.lines[3], "", "", ndiv_width, 1 / ratio_width)
+        super()._mesh()
+
+
+class Substrate(Polygon):
+    """
+    A rectangle geometry with 6 keypoints, 6 lines and one area.
+    """
+
+    def __init__(self, mapdl, width: float, height: float, roi_width,
+                 rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
+        self._b = width
+        self._h = height
+        self._b_roi = roi_width
+        self.line_left = None
+        self.line_top = None
+        self.line_right = None
+        self.line_bottom = None
+
+        self._calc_raw_points()
+        super().__init__(mapdl, self._raw_points, rotation_angle, destination)
+
+    def _calc_raw_points(self) -> None:
+        self._raw_points = [
+            Point2D(0, 0),
+            Point2D(0, self._h),
+            Point2D(self._b_roi, self._h),
+            Point2D(self._b, self._h),
+            Point2D(self._b, 0),
+            Point2D(self._b_roi, 0)
+        ]
+
+    def create(self) -> None:
+        super().create()
+        self.line_left = self.lines[0]
+        self.line_top1 = self.lines[1]
+        self.line_top2 = self.lines[2]
+        self.line_right = self.lines[3]
+        self.line_bottom1 = self.lines[4]
+        self.line_bottom2 = self.lines[5]
+
+    def mesh_custom(self, ndiv_width: int, ndiv_height: int, ratio_width: float = 1, ratio_height: float = 1):
+        self._mapdl.prep7()
+        super().select_lines()
+        self._mapdl.lesize(self.line_left, "", "", ndiv_height, ratio_height)
+        self._mapdl.lesize(self.line_right, "", "", ndiv_height, 1 / ratio_height)
+        self._mapdl.lesize(self.line_top2, "", "", ndiv_width, ratio_width)
+        self._mapdl.lesize(self.line_bottom2, "", "", ndiv_width, 1 / ratio_width)
         super()._mesh()
 
 
@@ -546,7 +599,6 @@ class _FilmWithROI(Geometry2d):
         self._raw_points.append(Point2D(self._r, self._h))
         self._raw_points.append(Point2D(self._r, 0))
 
-
     def _create_lines(self) -> None:
         self._create_film_lines()
         # self._create_roi_lines()
@@ -612,7 +664,7 @@ class _FilmWithROI(Geometry2d):
 
     def mesh(self, nir: int) -> None:
         n_roi_height = nir
-        n_roi_width = max(1, self._aspect_ratio * n_roi_height) # 6 * nir
+        n_roi_width = max(1, self._aspect_ratio * n_roi_height)  # 6 * nir
 
         self._mapdl.prep7()
         self._mapdl.mshkey(2)
@@ -630,7 +682,7 @@ class _FilmWithROI(Geometry2d):
         self._mapdl.lesize(self.film_line_top, "", "", n_roi_width, 0, "", "", "", 1)
         self._mapdl.lesize(self.film_line_right, "", "", n_roi_height, "", "", "", "", 1)
         # if not merged to substrate
-        if self.film_line_right == (self.film_line_bottom-1):
+        if self.film_line_right == (self.film_line_bottom - 1):
             self._mapdl.lesize(self.film_line_bottom, "", "", n_roi_width, 0, "", "", "", 1)
         else:  # merged to substrate (line direction reversed)
             self._mapdl.lesize(self.film_line_bottom, "", "", 20, 10, "", "", "", 1)
@@ -638,6 +690,139 @@ class _FilmWithROI(Geometry2d):
 
 
 class FilmWithROI(Geometry2d):
+    """
+    Gnerates Film with region of interest (full film height) on a substrate
+    """
+
+    def __init__(self, mapdl, radius: float, height: float, roi_width: float,  # roi_height: float,
+                 rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
+        super().__init__(mapdl, rotation_angle, destination)
+        self._r = radius
+        self._h = height
+        self._roi_width = roi_width
+        # self._roi_height = roi_height
+        self._calc_raw_points()
+
+        self.film_lines = []
+        # self.film_line_left = None
+        self.film_line_right = None
+        self.film_line_top = None
+        self.film_line_bottom = None
+        # self.film_line_roi_horizontal = None
+        self.film_line_roi_vertical = None
+        self.roi_lines = []
+        self.roi_line_left = None
+        self.roi_line_right = None
+        self.roi_line_top = None
+        self.roi_line_bottom = None
+        self.film_area = None
+        self.roi_area = None
+        super()._calc_points()
+
+    def _calc_raw_points(self) -> None:
+        self._raw_points.clear()
+
+        #  for lines between substrate/film and roi:
+        self._raw_points.append(Point2D(0, 0))
+        self._raw_points.append(Point2D(self._roi_width, 0))
+        self._raw_points.append(Point2D(self._roi_width, self._h))
+        #  ------------------------------
+
+        self._raw_points.append(Point2D(self._r, self._h))
+        self._raw_points.append(Point2D(self._r, 0))
+
+        #  for missing keypoint of roi:
+        self._raw_points.append(Point2D(0, self._h))
+
+    def _create_lines(self) -> None:
+        self._create_film_lines()
+        self._create_roi_lines()
+        self.lines.extend(self.film_lines)
+        self.lines.extend(self.roi_lines)  # [:2])
+
+    def _create_film_lines(self):
+        k = self.keypoints
+
+        # self.film_line_left = self._mapdl.l(k[0], k[1])
+        # self.film_lines.append(self.film_line_left)
+        # self.film_line_roi_horizontal = self._mapdl.l(k[1], k[2])
+        # self.film_lines.append(self.film_line_roi_horizontal)
+        self.film_line_roi_vertical = self._mapdl.l(k[1], k[2])
+        self.film_line_top = self._mapdl.l(k[2], k[3])
+        self.film_line_right = self._mapdl.l(k[3], k[4])
+        self.film_line_bottom = self._mapdl.l(k[4], k[1])
+
+        self.film_lines.append(self.film_line_roi_vertical)
+        self.film_lines.append(self.film_line_top)
+        self.film_lines.append(self.film_line_right)
+        self.film_lines.append(self.film_line_bottom)
+
+    def _create_roi_lines(self) -> None:
+        k = self.keypoints
+
+        self.roi_line_left = self._mapdl.l(k[0], k[5])
+        self.roi_line_right = self.film_line_roi_vertical
+        self.roi_line_top = self._mapdl.l(k[5], k[2])
+        self.roi_line_bottom = self._mapdl.l(k[1], k[0])# self.film_line_roi_horizontal
+        # self.roi_line_bottom = self._mapdl.l(k[0], k[1])  # self.film_line_roi_horizontal
+
+        self.roi_lines.append(self.roi_line_left)
+        self.roi_lines.append(self.roi_line_top)
+        self.roi_lines.append(self.roi_line_right)
+        self.roi_lines.append(self.roi_line_bottom)
+
+    def create(self) -> None:
+        self._mapdl.prep7()
+        self._create_keypoints()
+        self._create_lines()
+        self.film_area = self._mapdl.al(*self.film_lines)
+        self.roi_area = self._mapdl.al(*self.roi_lines)
+        self.areas.append(self.film_area)
+        self.areas.append(self.roi_area)
+
+    def create_merged_to(self, geometry2d: Type[Geometry2d]) -> None:
+        """
+        Use this to merge this geometry to another. Don't use lglue/aglue!
+        That would also change keypoint numbers, line numbers and area numbers
+        inside ANSYS.
+
+        :param geometry2d: Geometry to which the new area will merge (sharing keypoints).
+        """
+        self._mapdl.prep7()
+        self._create_keypoints_merged(geometry2d)
+        self._create_lines()
+        self.film_area = self._mapdl.al(*self.film_lines)
+        self.roi_area = self._mapdl.al(*self.roi_lines)
+        self.areas.append(self.film_area)
+        self.areas.append(self.roi_area)
+
+    def mesh(self, nir: int) -> None:
+        n_roi_height = 2 * nir
+        n_roi_width = 6 * nir
+
+        self._mapdl.prep7()
+        super().select_lines()
+        # ROI - indent region
+        self._mapdl.lesize(self.roi_line_left, "", "", n_roi_height, 0, "", "", "", 1)
+        self._mapdl.lesize(self.roi_line_right, "", "", n_roi_height, 0, "", "", "", 1)
+        # self._mapdl.lesize(self.roi_line_top, "", "", n_roi_width, -0.25, "", "", "", 1)
+        # self._mapdl.lesize(self.roi_line_bottom, "", "", n_roi_width, -0.25, "", "", "", 1)
+        self._mapdl.lesize(self.roi_line_top, "", "", n_roi_width, "", "", "", "", 1)
+        self._mapdl.lesize(self.roi_line_bottom, "", "", n_roi_width, "", "", "", "", 1)
+
+        # # outer region
+        # self._mapdl.lesize(self.film_line_left, "", "", 14, 0.1, "", "", "", 1)
+        self._mapdl.lesize(self.film_line_top, "", "", 19, 25, "", "", "", 1)
+        self._mapdl.lesize(self.film_line_right, "", "", 15, "", "", "", "", 1)
+        # if not merged to substrate
+        if self.film_line_right == (self.film_line_bottom - 1):
+            self._mapdl.lesize(self.film_line_bottom, "", "", 20, 0.10, "", "", "", 1)
+        else:  # merged to substrate (line direction reversed)
+            self._mapdl.lesize(self.film_line_bottom, "", "", 20, 10, "", "", "", 1)
+        super()._mesh()
+
+
+class FilmWithROI_backup221213(Geometry2d):
     def __init__(self, mapdl, radius: float, height: float, roi_width: float, roi_height: float,
                  rotation_angle: float = 0, destination: Point2D = Point2D(0, 0)) -> None:
         super().__init__(mapdl, rotation_angle, destination)
@@ -761,7 +946,7 @@ class FilmWithROI(Geometry2d):
         self._mapdl.lesize(self.film_line_top, "", "", 19, 25, "", "", "", 1)
         self._mapdl.lesize(self.film_line_right, "", "", 15, "", "", "", "", 1)
         # if not merged to substrate
-        if self.film_line_right == (self.film_line_bottom-1):
+        if self.film_line_right == (self.film_line_bottom - 1):
             self._mapdl.lesize(self.film_line_bottom, "", "", 20, 0.10, "", "", "", 1)
         else:  # merged to substrate (line direction reversed)
             self._mapdl.lesize(self.film_line_bottom, "", "", 20, 10, "", "", "", 1)
@@ -882,7 +1067,7 @@ class _Tip(Geometry2d):
         assert i >= 0, "Indentation depth must be >=0 for calc_tip_radius"
         r = self._radius
         # use simple fit with y=mx**2
-        x = (r*r - (r-i)**2)**0.5
+        x = (r * r - (r - i) ** 2) ** 0.5
 
         return x
 
